@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="Api_Gateway" target="17" />
+      <module name="Api_Gateway.main" target="17" />
+      <module name="Api_Gateway.test" target="17" />
+    </bytecodeTargetLevel>
+  </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="Api-Gateway" options="-parameters" />
+      <module name="Api-Gateway.main" options="-parameters" />
+      <module name="Api-Gateway.test" options="-parameters" />
       <module name="Api_Gateway" options="-parameters" />
       <module name="Api_Gateway.main" options="-parameters" />
       <module name="Api_Gateway.test" options="-parameters" />
       <module name="Cart-Service" options="-parameters" />
       <module name="Cart-Service.main" options="-parameters" />
       <module name="Cart-Service.test" options="-parameters" />
+      <module name="Order-Service" options="-parameters" />
+      <module name="Order-Service.main" options="-parameters" />
+      <module name="Order-Service.test" options="-parameters" />
       <module name="Product-Service" options="-parameters" />
       <module name="Product-Service.main" options="-parameters" />
       <module name="Product-Service.test" options="-parameters" />
