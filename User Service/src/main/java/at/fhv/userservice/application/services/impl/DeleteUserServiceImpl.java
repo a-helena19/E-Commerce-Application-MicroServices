@@ -31,9 +31,7 @@ public class DeleteUserServiceImpl implements DeleteUserService {
         existingUser.deactivate();
         userRepository.save(existingUser);
 
-        // todo
         // REST Call to Cart Service to delete cart for this user
-        // Note: This could be extended if Cart Service supports deletion
-        // For now, we just deactivate the user on the User Service side
+        cartServiceClient.deleteCartByUserId(id);
     }
 }

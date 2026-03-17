@@ -2,6 +2,7 @@ package at.fhv.api_gateway.rest;
 
 import at.fhv.api_gateway.application.config.RestClientConfig;
 import at.fhv.api_gateway.rest.dtos.cart.AddCartItemDTO;
+import at.fhv.api_gateway.rest.dtos.cart.CreateCartRequestDTO;
 import at.fhv.api_gateway.rest.dtos.cart.GetCartDTO;
 import at.fhv.api_gateway.rest.dtos.cart.UpdateCartItemDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,14 @@ public class CartRestController {
     public ResponseEntity<List<GetCartDTO>> getAllCarts() {
         String url = restClientConfig.cartServiceUrl + "/carts";
         return restTemplate.exchange(url, HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<List<GetCartDTO>>(){});
+    }
+
+    @Operation(description = "Creates a new cart for a specified user.")
+    @PostMapping
+    public ResponseEntity<GetCartDTO> createCartForUser(@Valid @RequestBody CreateCartRequestDTO request) {
+        String url = restClientConfig.cartServiceUrl + "/carts";
+        HttpEntity<CreateCartRequestDTO> requestEntity = new HttpEntity<>(request);
+        return restTemplate.postForEntity(url, requestEntity, GetCartDTO.class);
     }
 
     @Operation(description = "Retrieves the cart by cart ID.")
@@ -81,6 +90,7 @@ public class CartRestController {
         return restTemplate.exchange(url, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
     }
 
+    @Operation(description = "Updates the quantity of a specified item in a specified cart.")
     @PutMapping("/items")
     public ResponseEntity<GetCartDTO> updateItemQuantity(@Valid @RequestBody UpdateCartItemDTO updateCartItemDTO) {
         String url = restClientConfig.cartServiceUrl + "/carts/items";

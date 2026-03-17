@@ -45,5 +45,23 @@ public class CartServiceClient {
             return null;
         }
     }
+
+    public void deleteCartByUserId(UUID userId) {
+        // First get the cart ID for this user
+        UUID cartId = getCartByUserId(userId);
+        if (cartId != null) {
+            deleteCartById(cartId);
+        }
+    }
+
+    public void deleteCartById(UUID cartId) {
+        String url = cartServiceUrl + "/carts/" + cartId;
+
+        try {
+            restTemplate.delete(url);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete cart in Cart Service: " + e.getMessage(), e);
+        }
+    }
 }
 
