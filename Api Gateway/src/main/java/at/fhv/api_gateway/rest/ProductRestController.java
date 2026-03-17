@@ -4,6 +4,7 @@ import at.fhv.api_gateway.application.config.RestClientConfig;
 import at.fhv.api_gateway.rest.dtos.products.CreateProductDTO;
 import at.fhv.api_gateway.rest.dtos.products.GetProductDTO;
 import at.fhv.api_gateway.rest.dtos.products.UpdateProductDTO;
+import at.fhv.api_gateway.rest.dtos.products.StockUpdateDTO;
 import jakarta.validation.Valid;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -57,5 +58,19 @@ public class ProductRestController {
         String url = restClientConfig.productServiceUrl + "/products/" + id;
         restTemplate.exchange(url, HttpMethod.DELETE, HttpEntity.EMPTY, Void.class);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/reduce-stock")
+    public ResponseEntity<GetProductDTO> reduceStock(@PathVariable UUID id, @Valid @RequestBody StockUpdateDTO dto) {
+        String url = restClientConfig.productServiceUrl + "/products/" + id + "/reduce-stock";
+        HttpEntity<StockUpdateDTO> request = new HttpEntity<>(dto);
+        return restTemplate.postForEntity(url, request, GetProductDTO.class);
+    }
+
+    @PostMapping("/{id}/restore-stock")
+    public ResponseEntity<GetProductDTO> restoreStock(@PathVariable UUID id, @Valid @RequestBody StockUpdateDTO dto) {
+        String url = restClientConfig.productServiceUrl + "/products/" + id + "/restore-stock";
+        HttpEntity<StockUpdateDTO> request = new HttpEntity<>(dto);
+        return restTemplate.postForEntity(url, request, GetProductDTO.class);
     }
 }

@@ -43,7 +43,6 @@ public class GetUserServiceImpl implements GetUserService {
         List<GetUserDTO> result = new ArrayList<>();
 
         for (User user : users) {
-            // REST Call to Cart Service to get cart for each user
             UUID cartId = cartServiceClient.getCartByUserId(user.getId());
             result.add(userDTOMapper.toGetUserDTO(user, cartId));
         }

@@ -8,6 +8,7 @@ import at.fhv.productservice.application.services.UpdateProductService;
 import at.fhv.productservice.rest.dtos.CreateProductDTO;
 import at.fhv.productservice.rest.dtos.GetProductDTO;
 import at.fhv.productservice.rest.dtos.UpdateProductDTO;
+import at.fhv.productservice.rest.dtos.StockUpdateDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -69,5 +70,19 @@ public class ProductRestController {
     public ResponseEntity<GetProductDTO> deleteProduct(@PathVariable UUID id) {
         GetProductDTO deletedProduct = deleteProductService.deleteProduct(id);
         return ResponseEntity.ok(deletedProduct);
+    }
+
+    @Operation(description = "Reduces the stock of a product by the given quantity. Used by Order Service when an order is placed.")
+    @PostMapping("/{id}/reduce-stock")
+    public ResponseEntity<GetProductDTO> reduceStock(@PathVariable UUID id, @Valid @RequestBody StockUpdateDTO dto) {
+        GetProductDTO product = updateProductService.reduceStock(id, dto.getQuantity());
+        return ResponseEntity.ok(product);
+    }
+
+    @Operation(description = "Restores/increases the stock of a product by the given quantity. Used by Order Service when an order is cancelled/deleted.")
+    @PostMapping("/{id}/restore-stock")
+    public ResponseEntity<GetProductDTO> restoreStock(@PathVariable UUID id, @Valid @RequestBody StockUpdateDTO dto) {
+        GetProductDTO product = updateProductService.restoreStock(id, dto.getQuantity());
+        return ResponseEntity.ok(product);
     }
 }

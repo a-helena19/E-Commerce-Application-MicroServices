@@ -29,4 +29,28 @@ public class UpdateProductServiceImpl implements UpdateProductService {
         Product updatedProduct = productRepository.save(product);
         return productDTOMapper.toGetProductDTO(updatedProduct);
     }
+
+    @Override
+    public GetProductDTO reduceStock(UUID productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        if (product.getStock() < quantity) {
+            throw new RuntimeException("Insufficient stock for product " + productId + ". Available: " + product.getStock() + ", Requested: " + quantity);
+        }
+
+        product.reduceStock(quantity);
+        Product updatedProduct = productRepository.save(product);
+        return productDTOMapper.toGetProductDTO(updatedProduct);
+    }
+
+    @Override
+    public GetProductDTO restoreStock(UUID productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+
+        product.increaseStock(quantity);
+        Product updatedProduct = productRepository.save(product);
+        return productDTOMapper.toGetProductDTO(updatedProduct);
+    }
 }
