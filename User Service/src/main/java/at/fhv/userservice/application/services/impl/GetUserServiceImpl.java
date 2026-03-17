@@ -1,11 +1,11 @@
 package at.fhv.userservice.application.services.impl;
 
-
 import at.fhv.userservice.application.mapper.dtoMapper.UserDTOMapper;
 import at.fhv.userservice.application.services.GetUserService;
 import at.fhv.userservice.domain.exception.UserNotFoundException;
 import at.fhv.userservice.domain.model.User;
 import at.fhv.userservice.domain.model.UserRepository;
+import at.fhv.userservice.rest.client.CartServiceClient;
 import at.fhv.userservice.rest.dtos.GetUserDTO;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +16,12 @@ import java.util.UUID;
 @Service
 public class GetUserServiceImpl implements GetUserService {
     private final UserRepository userRepository;
-    private final CartRepository cartRepository;
+    private final CartServiceClient cartServiceClient;
     private final UserDTOMapper userDTOMapper;
 
-    public GetUserServiceImpl(UserRepository userRepository, CartRepository cartRepository, UserDTOMapper userDTOMapper) {
+    public GetUserServiceImpl(UserRepository userRepository, CartServiceClient cartServiceClient, UserDTOMapper userDTOMapper) {
         this.userRepository = userRepository;
-        this.cartRepository = cartRepository;
+        this.cartServiceClient = cartServiceClient;
         this.userDTOMapper = userDTOMapper;
     }
 
@@ -32,32 +32,22 @@ public class GetUserServiceImpl implements GetUserService {
             throw new UserNotFoundException("User with ID " + id + " not found");
         }
 
-        UUID cartId = null;
-        try {
-            Cart cart = cartRepository.findByUserId(id);
-            cartId = cart.getId();
-        } catch (CartNotFoundException e) {
-        }
+        UUID cartId = cartServiceClient.getCartByUserId(id);
 
         return userDTOMapper.toGetUserDTO(user, cartId);
     }
 
+    @Override
+    public List<GetUserDTO> getUsers() {
+        List<User> users = userRepository.findAll();
+        List<GetUserDTO> result = new ArrayList<>();
 
-        @Override
-        public List<GetUserDTO> getUsers() {
-            List<User> users = userRepository.findAll();
-            List<GetUserDTO> result = new ArrayList<>();
-
-            for (User user : users) {
-                UUID cartId = null;
-                try {
-                    Cart cart = cartRepository.findByUserId(user.getId());
-                    cartId = cart.getId();
-                } catch (CartNotFoundException e) {
-                }
-                result.add(userDTOMapper.toGetUserDTO(user, cartId));
-            }
-
-            return result;
+        for (User user : users) {
+            // REST Call to Cart Service to get cart for each user
+            UUID cartId = cartServiceClient.getCartByUserId(user.getId());
+            result.add(userDTOMapper.toGetUserDTO(user, cartId));
         }
+
+        return result;
+    }
 }

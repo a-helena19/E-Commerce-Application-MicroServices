@@ -6,18 +6,19 @@ import at.fhv.userservice.application.services.CreateUserService;
 import at.fhv.userservice.domain.exception.EmailAlreadyExistsException;
 import at.fhv.userservice.domain.model.User;
 import at.fhv.userservice.domain.model.UserRepository;
+import at.fhv.userservice.rest.client.CartServiceClient;
 import at.fhv.userservice.rest.dtos.GetUserDTO;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CreateUserServiceImpl implements CreateUserService {
     private final UserRepository userRepository;
-    private final CartRepository cartRepository;
+    private final CartServiceClient cartServiceClient;
     private final UserDTOMapper userDTOMapper;
 
-    public CreateUserServiceImpl(UserRepository userRepository, CartRepository cartRepository, UserDTOMapper userDTOMapper) {
+    public CreateUserServiceImpl(UserRepository userRepository, CartServiceClient cartServiceClient, UserDTOMapper userDTOMapper) {
         this.userRepository = userRepository;
-        this.cartRepository = cartRepository;
+        this.cartServiceClient = cartServiceClient;
         this.userDTOMapper = userDTOMapper;
     }
 
@@ -30,10 +31,9 @@ public class CreateUserServiceImpl implements CreateUserService {
         User user = User.create(firstName, lastName, email);
         User created = userRepository.save(user);
 
-        Cart newCart = Cart.create(created.getId());
-        Cart savedCart = cartRepository.save(newCart);
+        var cartId = cartServiceClient.createCartForUser(created.getId());
 
-        return userDTOMapper.toGetUserDTO(created, savedCart.getId());
+        return userDTOMapper.toGetUserDTO(created, cartId);
     }
 
 }
