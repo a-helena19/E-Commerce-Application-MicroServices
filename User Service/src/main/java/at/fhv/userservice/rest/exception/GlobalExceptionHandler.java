@@ -1,6 +1,8 @@
 package at.fhv.userservice.rest.exception;
 
-import at.fhv.e_commerce_application.domain.model.exception.*;
+import at.fhv.userservice.domain.exception.EmailAlreadyExistsException;
+import at.fhv.userservice.domain.exception.InvalidUserDataException;
+import at.fhv.userservice.domain.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -63,56 +65,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidUserDataException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidUserData(InvalidUserDataException exception) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleProductNotFound(ProductNotFoundException exception) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(ProductOutOfStockException.class)
-    public ResponseEntity<Map<String, Object>> handleProductOutOfStock(ProductOutOfStockException exception) {
-        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
-    }
-
-    @ExceptionHandler(InvalidProductDataException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidProductData(InvalidProductDataException exception) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    @ExceptionHandler(CartNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleCartNotFound(CartNotFoundException exception) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(CartItemNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleCartItemNotFound(CartItemNotFoundException exception) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(InvalidCartItemDataException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidCartItemData(InvalidCartItemDataException exception) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    @ExceptionHandler(InvalidCartDataException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidCartData(InvalidCartDataException exception) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    @ExceptionHandler(OrderNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleOrderNotFound(OrderNotFoundException exception) {
-        return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
-    }
-
-    @ExceptionHandler(InvalidOrderDataException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidOrderData(InvalidOrderDataException exception) {
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
-    }
-
-    @ExceptionHandler(OrderCannotBeCancelledException.class)
-    public ResponseEntity<Map<String, Object>> handleOrderCannotBeCancelled(OrderCannotBeCancelledException exception) {
-        return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
