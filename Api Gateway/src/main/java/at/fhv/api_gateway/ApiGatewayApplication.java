@@ -1,5 +1,6 @@
 package at.fhv.api_gateway;
 
+import at.fhv.api_gateway.application.config.PassthroughErrorHandler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +15,8 @@ public class ApiGatewayApplication {
 
     @Bean
     public RestTemplate restTemplate() {
-        return new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setErrorHandler(new PassthroughErrorHandler());
+        return restTemplate;
     }
-
 }
