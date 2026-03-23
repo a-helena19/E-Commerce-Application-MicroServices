@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: product-service
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  cloud:
+    stream:
+      bindings:
+        orderCanceledIn-in-0:
+          destination: order-events
+          group: product-service
+
+server:
+  port: 8082

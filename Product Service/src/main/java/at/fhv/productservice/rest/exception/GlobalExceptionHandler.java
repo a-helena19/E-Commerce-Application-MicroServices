@@ -1,8 +1,6 @@
 package at.fhv.productservice.rest.exception;
 
-import at.fhv.productservice.domain.model.exception.InvalidProdDataException;
-import at.fhv.productservice.domain.model.exception.ProductNotFoundException;
-import at.fhv.productservice.domain.model.exception.ProdOutOfStockException;
+import at.fhv.productservice.domain.model.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,14 +39,29 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler(ProdOutOfStockException.class)
-    public ResponseEntity<Map<String, Object>> handleProductOutOfStock(ProdOutOfStockException exception) {
+    @ExceptionHandler(ProductOutOfStockException.class)
+    public ResponseEntity<Map<String, Object>> handleProductOutOfStock(ProductOutOfStockException exception) {
         return buildErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
     }
 
-    @ExceptionHandler(InvalidProdDataException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidProductData(InvalidProdDataException exception) {
+    @ExceptionHandler(InvalidProductDataException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidProductData(InvalidProductDataException exception) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidEventException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidEvent(InvalidEventException ex) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderEventProcessingException.class)
+    public ResponseEntity<Map<String, Object>> handleEventProcessing(OrderEventProcessingException ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
+    @ExceptionHandler(ProductReservationException.class)
+    public ResponseEntity<Map<String, Object>> handleReservation(ProductReservationException ex) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
