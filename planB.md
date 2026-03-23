@@ -309,62 +309,206 @@ public class ProductReservationFailedEvent {
 
 ---
 
-### Schritt 4: Product Entity erweitern
-**Datei:** `Product Service/src/main/java/at/fhv/productservice/model/Product.java`
+### Schritt 4: Product Entity und Domain Service erstellen
 
-Sie müssen das `Product` Entity um ein Feld für reservierte Menge erweitern:
+#### 4.1 Product Entity anpassen
+**Datei:** `Product Service/src/main/java/at/fhv/productservice/domain/model/Product.java`
+
+Das `Product` Entity sollte nur Daten halten, **keine Business-Logik**:
 
 ```java
 import jakarta.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "products")
 public class Product {
-    // ...existing code...
-
+    @Id
+    private UUID id;
+    
+    @Column(name = "name")
+    private String name;
+    
+    @Column(name = "quantity")
+    private int quantity;
+    
     @Column(name = "reserved_quantity", nullable = false)
     private int reservedQuantity = 0;
+    
+    @Column(name = "price")
+    private double price;
 
-    // Getter und Setter
-    public int getReservedQuantity() {
-        return reservedQuantity;
-    }
+    // Konstruktor
+    public Product() {}
 
-    public void setReservedQuantity(int reservedQuantity) {
-        this.reservedQuantity = reservedQuantity;
+    // Getter und Setter (KEINE Business-Logik!)
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+    
+    public int getReservedQuantity() { return reservedQuantity; }
+    public void setReservedQuantity(int reservedQuantity) { 
+        this.reservedQuantity = reservedQuantity; 
     }
-
-    /**
-     * Erhöht die reservierte Menge
-     * 
-     * @param quantity Die zu reservierende Menge
-     */
-    public void reserveQuantity(int quantity) {
-        this.reservedQuantity += quantity;
-    }
-
-    /**
-     * Gibt die verfügbare Menge zurück (Menge - Reservierungen)
-     * 
-     * @return die verfügbare Menge
-     */
-    public int getAvailableQuantity() {
-        return this.quantity - this.reservedQuantity;
-    }
-
-    /**
-     * Überprüft, ob genug Menge verfügbar ist
-     * 
-     * @param requestedQuantity die angeforderte Menge
-     * @return true wenn genug Menge verfügbar ist
-     */
-    public boolean hasAvailableQuantity(int requestedQuantity) {
-        return getAvailableQuantity() >= requestedQuantity;
-    }
+    
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
 }
 ```
 
-**Wichtig:** Sie müssen eine Datenbankmigrationsscript erstellen, um die neue Spalte hinzuzufügen (falls Sie Liquibase/Flyway verwenden) oder die H2 Datenbank wird sie automatisch erstellen.
+**Wichtig:** Sie müssen eine Datenbankmigrationsscript erstellen, um die neue Spalte `reserved_quantity` hinzuzufügen (falls Sie Liquibase/Flyway verwenden) oder die H2 Datenbank wird sie automatisch erstellen.
+
+#### 4.2 ProductReservationService erstellen (Domain Service)
+**Datei:** `Product Service/src/main/java/at/fhv/productservice/domain/service/ProductReservationService.java`
+
+Die **Business-Logik gehört hier rein**, nicht in die Entity:
+
+```java
+package at.fhv.productservice.domain.service;
+
+import at.fhv.productservice.domain.model.Product;
+import at.fhv.productservice.domain.repository.ProductRepository;
+import at.fhv.productservice.events.ProductReservationConfirmedEvent;
+import at.fhv.productservice.events.ProductReservationFailedEvent;
+import at.fhv.productservice.infrastructure.messaging.ProductReservationEventPublisher;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+/**
+ * Domain Service für Produktreservierungen
+ * Enthält die Business-Logik für Reservierungen
+ */
+@Slf4j
+@Service
+public class ProductReservationService {
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @Autowired
+    private ProductReservationEventPublisher eventPublisher;
+
+    /**
+     * Reserviert eine Produktmenge
+     * Business-Logik: Prüfe Verfügbarkeit, reserviere, publiziere Event
+     * 
+     * @param cartId Die Cart-ID
+     * @param productId Die Produkt-ID
+     * @param requestedQuantity Die angeforderte Menge
+     */
+    @Transactional
+    public void reserveProduct(UUID cartId, UUID productId, int requestedQuantity) {
+        try {
+            log.info("Reservierungsanfrage: CartID={}, ProductID={}, Menge={}", 
+                    cartId, productId, requestedQuantity);
+            
+            // 1. Finde das Produkt
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Produkt nicht gefunden: " + productId));
+            
+            log.info("Produkt gefunden: {}. Bestand: {}, Reserviert: {}, Verfügbar: {}", 
+                    product.getName(), 
+                    product.getQuantity(), 
+                    product.getReservedQuantity(),
+                    getAvailableQuantity(product));
+            
+            // 2. Prüfe ob genug verfügbar ist (Business-Logik!)
+            if (hasAvailableQuantity(product, requestedQuantity)) {
+                // 3. Reserviere die Menge
+                product.setReservedQuantity(product.getReservedQuantity() + requestedQuantity);
+                productRepository.save(product);
+                
+                log.info("Reservierung erfolgreich! Neue Reservierung: {}", 
+                        product.getReservedQuantity());
+                
+                // 4. Publiziere Success-Event
+                ProductReservationConfirmedEvent event = new ProductReservationConfirmedEvent(
+                    cartId,
+                    productId,
+                    product.getReservedQuantity(),
+                    "CONFIRMED"
+                );
+                eventPublisher.publishProductReservationConfirmed(event);
+                
+            } else {
+                // Nicht genug verfügbar - publiziere Fehler-Event
+                log.warn("Nicht genug Bestand! Angefordert: {}, Verfügbar: {}", 
+                        requestedQuantity, getAvailableQuantity(product));
+                
+                ProductReservationFailedEvent event = new ProductReservationFailedEvent(
+                    cartId,
+                    productId,
+                    requestedQuantity,
+                    "INSUFFICIENT_STOCK"
+                );
+                eventPublisher.publishProductReservationFailed(event);
+            }
+        } catch (Exception e) {
+            log.error("Fehler bei Reservierung: {}", e.getMessage(), e);
+            
+            // Publiziere Fehler-Event als Fallback
+            try {
+                ProductReservationFailedEvent event = new ProductReservationFailedEvent(
+                    cartId,
+                    productId,
+                    requestedQuantity,
+                    "PROCESSING_ERROR: " + e.getMessage()
+                );
+                eventPublisher.publishProductReservationFailed(event);
+            } catch (Exception publishError) {
+                log.error("Fehler beim Publizieren des Fehler-Events: {}", publishError.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Helper-Methode: Gibt verfügbare Menge zurück
+     * Business-Logik: available = total - reserved
+     */
+    private int getAvailableQuantity(Product product) {
+        return product.getQuantity() - product.getReservedQuantity();
+    }
+
+    /**
+     * Helper-Methode: Prüft ob genug verfügbar ist
+     * Business-Logik für Reservierung
+     */
+    private boolean hasAvailableQuantity(Product product, int requestedQuantity) {
+        return getAvailableQuantity(product) >= requestedQuantity;
+    }
+
+    /**
+     * Gibt eine Reservierung frei (falls nötig)
+     * 
+     * @param productId Die Produkt-ID
+     * @param quantity Die freizugebende Menge
+     */
+    @Transactional
+    public void releaseReservation(UUID productId, int quantity) {
+        try {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Produkt nicht gefunden: " + productId));
+            
+            product.setReservedQuantity(Math.max(0, product.getReservedQuantity() - quantity));
+            productRepository.save(product);
+            
+            log.info("Reservierung freigegeben. Neue Reservierung: {}", 
+                    product.getReservedQuantity());
+        } catch (Exception e) {
+            log.error("Fehler beim Freigeben der Reservierung: {}", e.getMessage());
+        }
+    }
+}
+```
 
 ---
 
@@ -518,17 +662,14 @@ public class ProductReservationEventPublisher {
 ---
 
 ### Schritt 7: Cart Event Listener erstellen
-**Datei:** `Product Service/src/main/java/at/fhv/productservice/messaging/CartEventListener.java`
+**Datei:** `Product Service/src/main/java/at/fhv/productservice/infrastructure/messaging/CartEventListener.java`
 
 ```java
-package at.fhv.productservice.messaging;
+package at.fhv.productservice.infrastructure.messaging;
 
 import at.fhv.productservice.config.ProductMessagingConfig;
 import at.fhv.productservice.events.CartCheckoutEvent;
-import at.fhv.productservice.events.ProductReservationConfirmedEvent;
-import at.fhv.productservice.events.ProductReservationFailedEvent;
-import at.fhv.productservice.model.Product;
-import at.fhv.productservice.repository.ProductRepository;
+import at.fhv.productservice.domain.service.ProductReservationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -537,7 +678,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Listener für Cart Checkout Events
- * Verarbeitet Checkouts und aktualisiert Produktreservierungen
+ * Delegiert die Business-Logik an ProductReservationService
  */
 @Slf4j
 @Component
@@ -545,14 +686,11 @@ import org.springframework.stereotype.Component;
 public class CartEventListener {
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private ProductReservationEventPublisher reservationPublisher;
+    private ProductReservationService reservationService;  // Domain Service!
 
     /**
      * Verarbeitet CartCheckoutEvent
-     * Reserviert Produktmenge und publiziert Success/Failed Event
+     * Delegiert die Reservierungslogik an ProductReservationService
      * 
      * @param event Das empfangene Event
      */
@@ -562,63 +700,21 @@ public class CartEventListener {
             log.info("Received CartCheckoutEvent für Cart ID: {}, Product ID: {}, Quantity: {}", 
                     event.getCartId(), event.getProductId(), event.getQuantity());
             
-            Product product = productRepository.findById(event.getProductId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Produkt nicht gefunden: " + event.getProductId()));
+            // ✅ Delegiere an Domain Service (wo die Business-Logik ist!)
+            reservationService.reserveProduct(
+                event.getCartId(),
+                event.getProductId(),
+                event.getQuantity()
+            );
             
-            log.info("Produkt gefunden: {}. Verfügbare Menge: {}", 
-                    product.getId(), product.getAvailableQuantity());
-            
-            // Überprüfe, ob genug Menge verfügbar ist
-            if (product.hasAvailableQuantity(event.getQuantity())) {
-                // Reserviere die Menge
-                product.reserveQuantity(event.getQuantity());
-                productRepository.save(product);
-                
-                log.info("Produktmenge erfolgreich reserviert. Neue Reservierung: {}", 
-                        product.getReservedQuantity());
-                
-                // Publiziere Success Event
-                ProductReservationConfirmedEvent successEvent = new ProductReservationConfirmedEvent(
-                    event.getCartId(),
-                    event.getProductId(),
-                    product.getReservedQuantity(),
-                    "CONFIRMED"
-                );
-                reservationPublisher.publishProductReservationConfirmed(successEvent);
-            } else {
-                // Nicht genug Menge verfügbar
-                log.warn("Nicht genug Produktmenge verfügbar. Angefordert: {}, Verfügbar: {}", 
-                        event.getQuantity(), product.getAvailableQuantity());
-                
-                // Publiziere Failed Event
-                ProductReservationFailedEvent failedEvent = new ProductReservationFailedEvent(
-                    event.getCartId(),
-                    event.getProductId(),
-                    event.getQuantity(),
-                    "INSUFFICIENT_STOCK"
-                );
-                reservationPublisher.publishProductReservationFailed(failedEvent);
-            }
         } catch (Exception e) {
             log.error("Fehler beim Verarbeiten von CartCheckoutEvent: {}", e.getMessage(), e);
-            
-            // Publiziere Failed Event als Fallback
-            try {
-                ProductReservationFailedEvent failedEvent = new ProductReservationFailedEvent(
-                    event.getCartId(),
-                    event.getProductId(),
-                    event.getQuantity(),
-                    "PROCESSING_ERROR: " + e.getMessage()
-                );
-                reservationPublisher.publishProductReservationFailed(failedEvent);
-            } catch (Exception publishError) {
-                log.error("Fehler beim Publizieren von Fehler-Event: {}", publishError.getMessage());
-            }
         }
     }
 }
 ```
+
+**Wichtig:** Der Listener ist nur eine **dünne Schicht**, die das Event empfängt und an die **Domain Service** delegiert. Die gesamte **Business-Logik** (Verfügbarkeitsprüfung, Reservierung, Event-Publishing) ist in `ProductReservationService`!
 
 ---
 
@@ -774,10 +870,11 @@ class CartEventListenerTest {
 - [ ] Step 1: Dependencies zu build.gradle hinzufügen
 - [ ] Step 2: application.properties konfiguriert
 - [ ] Step 3: Alle 3 Event-Klassen erstellt (IDENTISCH mit A!)
-- [ ] Step 4: Product Entity um reserved_quantity erweitert
+- [ ] Step 4.1: Product Entity um reserved_quantity erweitert
+- [ ] Step 4.2: ProductReservationService erstellt (Domain Service mit Business-Logik!)
 - [ ] Step 5: ProductMessagingConfig erstellt
 - [ ] Step 6: ProductReservationEventPublisher erstellt
-- [ ] Step 7: CartEventListener erstellt und getestet
+- [ ] Step 7: CartEventListener erstellt (delegiert an Service)
 - [ ] Step 8: OpenAPI-Annotationen hinzugefügt
 - [ ] Step 9: Unit Tests geschrieben und ausgeführt
 - [ ] Mit Person A: Integration testen nach deren Completion
