@@ -5,36 +5,35 @@
 
 ## 📋 Aufgaben-Matrix
 
-| Aufgabe | Person A (Order Service) | Person B (Product Service) | Zusammenarbeit |
+| Aufgabe | Person A (Cart Service) | Person B (Product Service) | Zusammenarbeit |
 |---------|----------------------|------------------------|-----------------|
 | **Setup** | | | |
 | Dependencies hinzufügen | ✅ Schritt 1 | ✅ Schritt 1 | 🔄 Parallel |
 | application.properties | ✅ Schritt 2 | ✅ Schritt 2 | 🔄 Parallel |
 | | | | |
 | **Event-Klassen** | | | |
-| OrderCreatedEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
-| OrderCanceledEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
-| ProductReservationUpdatedEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
+| CartCheckoutEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
+| ProductReservationConfirmedEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
 | ProductReservationFailedEvent.java | ✅ Schritt 3 | ✅ Schritt 3 | ⚠️ **IDENTISCH!** |
 | | | | |
 | **Entity-Erweiterung** | | | |
-| Order Entity anpassen | ✅ (vorhanden) | - | nur Person A |
+| Cart Entity anpassen | ✅ (vorhanden) | - | nur Person A |
 | Product Entity anpassen | - | ✅ Schritt 4 | nur Person B |
 | | | | |
 | **Messaging Config** | | | |
-| OrderMessagingConfig.java | ✅ Schritt 4 | - | nur Person A |
+| CartMessagingConfig.java | ✅ Schritt 4 | - | nur Person A |
 | ProductMessagingConfig.java | - | ✅ Schritt 5 | nur Person B |
 | | | | |
 | **Event Publishing** | | | |
-| OrderEventPublisher | ✅ Schritt 5 | - | nur Person A |
+| CartEventPublisher | ✅ Schritt 5 | - | nur Person A |
 | ProductReservationEventPublisher | - | ✅ Schritt 6 | nur Person B |
 | | | | |
 | **Event Listening** | | | |
 | ProductReservationEventListener | ✅ Schritt 6 | - | nur Person A |
-| OrderEventListener | - | ✅ Schritt 7 | nur Person B |
+| CartEventListener | - | ✅ Schritt 7 | nur Person B |
 | | | | |
 | **Service Integration** | | | |
-| OrderService anpassen | ✅ Schritt 7 | - | nur Person A |
+| CartService anpassen | ✅ Schritt 7 | - | nur Person A |
 | ProductService anpassen | - | ✅ (optional) | nur Person B |
 | | | | |
 | **OpenAPI & Testen** | | | |
@@ -44,35 +43,33 @@
 | **Integration Testing** | | | |
 | Szenario 1: Happy Path | 🔄 Zusammen | 🔄 Zusammen | ⚠️ **MUSS KLAPPT!** |
 | Szenario 2: Error Case | 🔄 Zusammen | 🔄 Zusammen | ⚠️ **MUSS KLAPPT!** |
-| Szenario 3: Cancellation | 🔄 Zusammen | 🔄 Zusammen | ⚠️ **MUSS KLAPPT!** |
 
 ---
 
 ## 📁 Datei-Ownership
 
-### Person A – Order Service
+### Person A – Cart Service
 
 ```
-Order Service/src/main/java/at/fhv/orderservice/
+Cart Service/src/main/java/at/fhv/cartservice/
 │
 ├── 🔴 config/
-│   └── OrderMessagingConfig.java           [NEU - Person A]
+│   └── CartMessagingConfig.java            [NEU - Person A]
 │
 ├── 🟡 controller/
-│   └── OrderController.java                 [ÄNDERN - OpenAPI]
+│   └── CartController.java                  [ÄNDERN - OpenAPI]
 │
 ├── 🟢 events/                              [NEU - Person A & B]
-│   ├── OrderCreatedEvent.java              [NEU - IDENTISCH mit B!]
-│   ├── OrderCanceledEvent.java             [NEU - IDENTISCH mit B!]
-│   ├── ProductReservationUpdatedEvent.java [NEU - IDENTISCH mit B!]
+│   ├── CartCheckoutEvent.java              [NEU - IDENTISCH mit B!]
+│   ├── ProductReservationConfirmedEvent.java [NEU - IDENTISCH mit B!]
 │   └── ProductReservationFailedEvent.java  [NEU - IDENTISCH mit B!]
 │
 ├── 🟣 messaging/                           [NEU - Person A]
-│   ├── OrderEventPublisher.java            [NEU]
+│   ├── CartEventPublisher.java             [NEU]
 │   └── ProductReservationEventListener.java [NEU]
 │
 ├── 🟠 service/
-│   └── OrderService.java                   [ÄNDERN - Event Publishing]
+│   └── CartService.java                    [ÄNDERN - Event Publishing]
 │
 └── 📄 application.properties                [ÄNDERN - RabbitMQ Config]
 ```
@@ -91,13 +88,12 @@ Product Service/src/main/java/at/fhv/productservice/
 │   └── ProductController.java              [ÄNDERN - OpenAPI]
 │
 ├── 🟢 events/                              [NEU - Person A & B]
-│   ├── OrderCreatedEvent.java              [NEU - IDENTISCH mit A!]
-│   ├── OrderCanceledEvent.java             [NEU - IDENTISCH mit A!]
-│   ├── ProductReservationUpdatedEvent.java [NEU - IDENTISCH mit A!]
+│   ├── CartCheckoutEvent.java              [NEU - IDENTISCH mit A!]
+│   ├── ProductReservationConfirmedEvent.java [NEU - IDENTISCH mit A!]
 │   └── ProductReservationFailedEvent.java  [NEU - IDENTISCH mit A!]
 │
 ├── 🟣 messaging/                           [NEU - Person B]
-│   ├── OrderEventListener.java             [NEU]
+│   ├── CartEventListener.java              [NEU]
 │   └── ProductReservationEventPublisher.java [NEU]
 │
 ├── 🟠 model/

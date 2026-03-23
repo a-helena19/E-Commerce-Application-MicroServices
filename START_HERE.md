@@ -6,7 +6,7 @@ Sie haben **5 neue Dokumentationen** erhalten. Diese Seite hilft Ihnen zu entsch
 
 ---
 
-## 👤 Wenn Sie **Person A** sind (Order Service)
+## 👤 Wenn Sie **Person A** sind (Cart Service)
 
 ### 🎯 Ihr Aufgaben-Ordner:
 ```
@@ -14,9 +14,10 @@ Sie haben **5 neue Dokumentationen** erhalten. Diese Seite hilft Ihnen zu entsch
 ```
 
 ### 📋 Ihre Aufgaben:
-- Publizieren Sie: `OrderCreatedEvent`, `OrderCanceledEvent`
-- Empfangen Sie: `ProductReservationUpdatedEvent`, `ProductReservationFailedEvent`
-- **Port:** 8094
+- Publizieren Sie: `CartCheckoutEvent` (wenn Kunde Checkout macht)
+- Empfangen Sie: `ProductReservationConfirmedEvent`, `ProductReservationFailedEvent`
+- Aktualisieren Sie: Cart Status basierend auf Produktreservierungen
+- **Port:** 8091
 - **Aufwand:** 8-10 Stunden
 
 ### 🚀 Schritt-für-Schritt:
@@ -50,8 +51,9 @@ Sie haben **5 neue Dokumentationen** erhalten. Diese Seite hilft Ihnen zu entsch
 ```
 
 ### 📋 Ihre Aufgaben:
-- Empfangen Sie: `OrderCreatedEvent`, `OrderCanceledEvent`
-- Publizieren Sie: `ProductReservationUpdatedEvent`, `ProductReservationFailedEvent`
+- Empfangen Sie: `CartCheckoutEvent` (vom Cart Service)
+- Publizieren Sie: `ProductReservationConfirmedEvent`, `ProductReservationFailedEvent`
+- Reservieren/Freigeben Sie: Produktmengen basierend auf Cart-Checkouts
 - **Port:** 8092
 - **Aufwand:** 8-10 Stunden
 
@@ -137,10 +139,11 @@ Person B: planB.md
 
 ### ⚠️ KRITISCH – Muss identisch sein:
 ```
-□ Event-Klassen: OrderCreatedEvent, OrderCanceledEvent,
-                 ProductReservationUpdatedEvent, ProductReservationFailedEvent
-□ RabbitMQ Queue Names: order-events, product-reservation-events
-□ Event Fields: UUID orderId, UUID productId, int quantity, etc.
+□ Event-Klassen: CartCheckoutEvent, 
+                 ProductReservationConfirmedEvent, 
+                 ProductReservationFailedEvent
+□ RabbitMQ Queue Names: cart-checkout-events, product-reservation-events
+□ Event Fields: UUID cartId, UUID productId, int quantity, etc.
 ```
 
 ### ✅ Empfohlen – Folgt euch gegenseitig:
@@ -148,7 +151,7 @@ Person B: planB.md
 □ RabbitMQ Konfiguration (spring.rabbitmq.*)
 □ Spring Cloud Stream Binding Naming
 □ Consumer Group Names
-□ Port-Nummern (Person A: 8094, Person B: 8092)
+□ Port-Nummern (Person A: 8091, Person B: 8092)
 ```
 
 ### 🔄 Parallel möglich – Unabhängig voneinander:
@@ -397,7 +400,7 @@ Nach Completion sollten Sie verstehen:
 👉 ÖFFNEN: planA.md
 👉 STARTEN: Schritt 1
 👉 ZEIT: 8-10 Stunden
-👉 ERGEBNIS: Funktionierender Order Service mit Event Publishing
+👉 ERGEBNIS: Funktionierender Cart Service mit Event Publishing
 ```
 
 ### Person B:
@@ -434,7 +437,7 @@ Bei Fragen: Schauen Sie auf das entsprechende Dokument oben → oder fragen Sie 
 ---
 
 **Ihr Projektteam**
-- Person A (Order Service) & Person B (Product Service)
+- Person A (Cart Service) & Person B (Product Service)
 - Zusammenarbeit mit RabbitMQ & Spring Cloud Stream
 - Deadline: 23.03.2026
 

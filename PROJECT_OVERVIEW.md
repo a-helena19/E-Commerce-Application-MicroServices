@@ -3,25 +3,25 @@
 
 **Deadline:** 23.03.2026  
 **Messaging Broker:** RabbitMQ (lokal auf Port 5672)  
-**Services:** Order Service + Product Service
+**Services:** Cart Service + Product Service
 
 ---
 
 ## 📊 Arbeitsverteilung
 
-### Person A: Order Service
-- **Port:** 8094
+### Person A: Cart Service
+- **Port:** 8091
 - **Aufgaben:**
-  - ✅ Event Publishing: `OrderCreatedEvent`, `OrderCanceledEvent`
-  - ✅ Event Listening: `ProductReservationUpdatedEvent`, `ProductReservationFailedEvent`
-  - ✅ Order Status Management basierend auf Events
+  - ✅ Event Publishing: `CartCheckoutEvent`
+  - ✅ Event Listening: `ProductReservationConfirmedEvent`, `ProductReservationFailedEvent`
+  - ✅ Cart Status Management basierend auf Events
   - ✅ RabbitMQ Connection & Spring Cloud Stream Binding
 
 ### Person B: Product Service
 - **Port:** 8092
 - **Aufgaben:**
-  - ✅ Event Listening: `OrderCreatedEvent`, `OrderCanceledEvent`
-  - ✅ Event Publishing: `ProductReservationUpdatedEvent`, `ProductReservationFailedEvent`
+  - ✅ Event Listening: `CartCheckoutEvent`
+  - ✅ Event Publishing: `ProductReservationConfirmedEvent`, `ProductReservationFailedEvent`
   - ✅ Produktreservierungslogik
   - ✅ RabbitMQ Connection & Spring Cloud Stream Binding
 
@@ -31,22 +31,22 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                    SAGA: Order Placement Flow                       │
+│                    SAGA: Cart Checkout Flow                         │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐
 │ User/Client  │
 └──────┬───────┘
        │
-       │ 1. POST /api/orders
+       │ POST /api/carts/{id}/checkout
        ↓
 ┌──────────────────────┐         ┌────────────────────┐
 │  PERSON A            │         │  RabbitMQ          │
-│  Order Service       │         │  (Message Broker)  │
+│  Cart Service        │         │  (Message Broker)  │
 │  ──────────────      │         └────────────────────┘
-│ - Create Order       │                    ▲
+│ - Checkout Cart      │                    ▲
 │ - Status: PENDING    │                    │
-│ - Publish Event ────────────→ order-events queue
+│ - Publish Event ────────────→ cart-checkout-events queue
 └──────────────────────┘                    │
                                              │
                                              ↓ (Consumer Group: product-service-group)
@@ -65,51 +65,22 @@
       SUCCESS CASE              │             FAILURE CASE           │
                     │                                                  │
       ProductReservation    │      ProductReservation                │
-      UpdatedEvent          │      FailedEvent                       │
-      (RESERVED)            │      (INSUFFICIENT_STOCK)              │
+      ConfirmedEvent        │      FailedEvent                       │
+      (CONFIRMED)           │      (INSUFFICIENT_STOCK)              │
                     │                                                  │
                     ↓                                                  ↓
       ┌─────────────────────────┐           ┌──────────────────────────┐
       │ product-reservation-    │           │ product-reservation-     │
       │ events queue            │           │ events queue             │
-      │ (order-service-group)   │           │ (order-service-group)    │
+      │ (cart-service-group)    │           │ (cart-service-group)     │
       └───────────┬─────────────┘           └───────────┬──────────────┘
                   │                                     │
                   ↓                                     ↓
       ┌──────────────────────┐           ┌──────────────────────┐
       │  PERSON A (Listen)   │           │  PERSON A (Listen)   │
-      │  Update Order        │           │  Update Order        │
-      │  Status: CONFIRMED   │           │  Status: CANCELED    │
+      │  Update Cart         │           │  Update Cart         │
+      │  Status: CHECKED_OUT │           │  Status: CHECKOUT_FAILED │
       └──────────────────────┘           └──────────────────────┘
-
-─────────────────────────────────────────────────────────────────────
-
-                    SAGA: Order Cancellation Flow
-
-┌──────────────┐
-│ User/Client  │
-└──────┬───────┘
-       │
-       │ DELETE /api/orders/{id}/cancel
-       ↓
-┌──────────────────────┐         ┌────────────────────┐
-│  PERSON A            │         │  RabbitMQ          │
-│  Order Service       │         │  (Message Broker)  │
-│  ──────────────      │         └────────────────────┘
-│ - Cancel Order       │                    ▲
-│ - Status: CANCELED   │                    │
-│ - Publish Event ────────────→ order-events queue
-└──────────────────────┘                    │
-                                             │
-                                             ↓ (Consumer Group: product-service-group)
-                                    ┌──────────────────────┐
-                                    │  PERSON B            │
-                                    │  Product Service     │
-                                    │  ──────────────────  │
-                                    │ - Receive Event      │
-                                    │ - Release Reserved   │
-                                    │   Quantity           │
-                                    └──────────────────────┘
 ```
 
 ---
@@ -118,36 +89,24 @@
 
 | Queue Name | Publisher | Consumer(s) | Description |
 |-----------|-----------|-----------|-----------|
-| `order-events` | Order Service (Person A) | Product Service (Person B) | Neue Bestellungen & Stornierungen |
-| `product-reservation-events` | Product Service (Person B) | Order Service (Person A) | Reservierungsresultate |
+| `cart-checkout-events` | Cart Service (Person A) | Product Service (Person B) | Cart Checkouts |
+| `product-reservation-events` | Product Service (Person B) | Cart Service (Person A) | Reservierungsresultate |
 
 ---
 
 ## 📦 Events Dokumentation
 
-### Von Person A (Order Service) publiziert:
+### Von Person A (Cart Service) publiziert:
 
-#### OrderCreatedEvent
+#### CartCheckoutEvent
 ```json
 {
-  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "cartId": "550e8400-e29b-41d4-a716-446655440000",
   "userId": "550e8400-e29b-41d4-a716-446655440001",
   "productId": "550e8400-e29b-41d4-a716-446655440002",
   "quantity": 5,
-  "price": 99.99,
+  "totalPrice": 99.99,
   "timestamp": "2026-03-23T10:30:00"
-}
-```
-
-#### OrderCanceledEvent
-```json
-{
-  "orderId": "550e8400-e29b-41d4-a716-446655440000",
-  "userId": "550e8400-e29b-41d4-a716-446655440001",
-  "productId": "550e8400-e29b-41d4-a716-446655440002",
-  "quantity": 5,
-  "reason": "Bestellung storniert",
-  "timestamp": "2026-03-23T10:35:00"
 }
 ```
 
@@ -155,13 +114,13 @@
 
 ### Von Person B (Product Service) publiziert:
 
-#### ProductReservationUpdatedEvent (SUCCESS)
+#### ProductReservationConfirmedEvent (SUCCESS)
 ```json
 {
-  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "cartId": "550e8400-e29b-41d4-a716-446655440000",
   "productId": "550e8400-e29b-41d4-a716-446655440002",
   "reservedQuantity": 45,
-  "status": "RESERVED",
+  "status": "CONFIRMED",
   "timestamp": "2026-03-23T10:30:05"
 }
 ```
@@ -169,7 +128,7 @@
 #### ProductReservationFailedEvent (FAILURE)
 ```json
 {
-  "orderId": "550e8400-e29b-41d4-a716-446655440000",
+  "cartId": "550e8400-e29b-41d4-a716-446655440000",
   "productId": "550e8400-e29b-41d4-a716-446655440002",
   "requestedQuantity": 100,
   "reason": "INSUFFICIENT_STOCK",
@@ -208,7 +167,7 @@ spring.rabbitmq.password=guest
 
 ## 🧪 Integrations-Test Szenarios
 
-### Szenario 1: Happy Path - Bestellung mit ausreichendem Bestand
+### Szenario 1: Happy Path - Cart Checkout mit ausreichendem Bestand
 
 **Schritte:**
 1. Person B: Produkt mit 100 Stück erstellen
@@ -222,31 +181,37 @@ spring.rabbitmq.password=guest
    # Response: productId = "prod-123"
    ```
 
-2. Person A: Bestellung mit 10 Stück erstellen
+2. Person A: Cart erstellen
    ```bash
-   POST http://localhost:8094/api/orders
+   POST http://localhost:8091/api/carts
    {
      "userId": "user-456",
      "productId": "prod-123",
      "quantity": 10,
-     "price": 999.99
+     "totalPrice": 999.99
    }
-   # Response: orderId = "order-789", status = PENDING
+   # Response: cartId = "cart-789"
    ```
 
-3. **Automatisch (via RabbitMQ):**
-   - OrderCreatedEvent wird publiziert
+3. Person A: Cart Checkout
+   ```bash
+   POST http://localhost:8091/api/carts/cart-789/checkout
+   # Response: status = PENDING
+   ```
+
+4. **Automatisch (via RabbitMQ):**
+   - CartCheckoutEvent wird publiziert
    - Product Service empfängt Event
    - Product Service reserviert 10 Stück
-   - Product Service publiziert ProductReservationUpdatedEvent mit status=RESERVED
+   - Product Service publiziert ProductReservationConfirmedEvent mit status=CONFIRMED
 
-4. Person A: Order Status überprüfen
+5. Person A: Cart Status überprüfen
    ```bash
-   GET http://localhost:8094/api/orders/order-789
-   # Expected: status = CONFIRMED
+   GET http://localhost:8091/api/carts/cart-789
+   # Expected: status = CHECKED_OUT
    ```
 
-5. Person B: Produkt überprüfen
+6. Person B: Produkt überprüfen
    ```bash
    GET http://localhost:8092/api/products/prod-123
    # Expected: quantity = 100, reservedQuantity = 10, availableQuantity = 90
@@ -254,7 +219,7 @@ spring.rabbitmq.password=guest
 
 ---
 
-### Szenario 2: Fehlerfall - Bestellung mit unzureichendem Bestand
+### Szenario 2: Fehlerfall - Cart Checkout mit unzureichendem Bestand
 
 **Schritte:**
 1. Person B: Produkt mit 5 Stück erstellen
@@ -268,31 +233,37 @@ spring.rabbitmq.password=guest
    # Response: productId = "prod-rare"
    ```
 
-2. Person A: Bestellung mit 20 Stück erstellen
+2. Person A: Cart mit 20 Stück erstellen
    ```bash
-   POST http://localhost:8094/api/orders
+   POST http://localhost:8091/api/carts
    {
      "userId": "user-456",
      "productId": "prod-rare",
      "quantity": 20,
-     "price": 499.99
+     "totalPrice": 9999.80
    }
-   # Response: orderId = "order-failed", status = PENDING
+   # Response: cartId = "cart-failed"
    ```
 
-3. **Automatisch (via RabbitMQ):**
-   - OrderCreatedEvent wird publiziert
+3. Person A: Cart Checkout
+   ```bash
+   POST http://localhost:8091/api/carts/cart-failed/checkout
+   # Response: status = PENDING
+   ```
+
+4. **Automatisch (via RabbitMQ):**
+   - CartCheckoutEvent wird publiziert
    - Product Service empfängt Event
    - Product Service prüft: 5 < 20 ❌
    - Product Service publiziert ProductReservationFailedEvent mit reason=INSUFFICIENT_STOCK
 
-4. Person A: Order Status überprüfen
+5. Person A: Cart Status überprüfen
    ```bash
-   GET http://localhost:8094/api/orders/order-failed
-   # Expected: status = CANCELED
+   GET http://localhost:8091/api/carts/cart-failed
+   # Expected: status = CHECKOUT_FAILED
    ```
 
-5. Person B: Produkt überprüfen
+6. Person B: Produkt überprüfen
    ```bash
    GET http://localhost:8092/api/products/prod-rare
    # Expected: reservedQuantity = 0 (keine Reservierung)
@@ -300,29 +271,6 @@ spring.rabbitmq.password=guest
 
 ---
 
-### Szenario 3: Stornierung - Order wird storniert
-
-**Schritte:**
-1. Szenario 1 durchführen (Order mit status=CONFIRMED)
-
-2. Person A: Order stornieren
-   ```bash
-   DELETE http://localhost:8094/api/orders/order-789/cancel
-   # Response: status = CANCELED
-   ```
-
-3. **Automatisch (via RabbitMQ):**
-   - OrderCanceledEvent wird publiziert
-   - Product Service empfängt Event
-   - Product Service gibt 10 Stück Reservierung frei
-
-4. Person B: Produkt überprüfen
-   ```bash
-   GET http://localhost:8092/api/products/prod-123
-   # Expected: reservedQuantity = 0 (wieder freigegeben)
-   ```
-
----
 
 ## 🚀 Startup-Anleitung
 

@@ -3,7 +3,7 @@
 
 **Datum:** 23.03.2026  
 **Fokus:** Product Service - Event Listening und Publishing  
-**Partner:** Person A (Order Service)  
+**Partner:** Person A (Cart Service)  
 **Messaging Broker:** RabbitMQ
 
 ---
@@ -13,11 +13,10 @@
 Sie sind verantwortlich für den **Product Service**. Ihre Aufgabe ist es, folgende Events zu **empfangen** und zu **publizieren**:
 
 ### Events die Sie empfangen:
-- `OrderCreatedEvent` - Von Order Service (neue Bestellung)
-- `OrderCanceledEvent` - Von Order Service (Bestellung storniert)
+- `CartCheckoutEvent` - Von Cart Service (Checkout eines Carts)
 
 ### Events die Sie publizieren:
-- `ProductReservationUpdatedEvent` - Reservierung erfolgreich
+- `ProductReservationConfirmedEvent` - Reservierung erfolgreich
 - `ProductReservationFailedEvent` - Reservierung fehlgeschlagen
 
 ---
@@ -67,18 +66,14 @@ spring.rabbitmq.username=guest
 spring.rabbitmq.password=guest
 
 # ===== Spring Cloud Stream Bindings =====
-# Inbound: Events die Product Service von Order Service empfängt
-spring.cloud.stream.bindings.orderCreated-in.destination=order-events
-spring.cloud.stream.bindings.orderCreated-in.group=product-service-group
-spring.cloud.stream.bindings.orderCreated-in.contentType=application/json
-
-spring.cloud.stream.bindings.orderCanceled-in.destination=order-events
-spring.cloud.stream.bindings.orderCanceled-in.group=product-service-group
-spring.cloud.stream.bindings.orderCanceled-in.contentType=application/json
+# Inbound: Events die Product Service von Cart Service empfängt
+spring.cloud.stream.bindings.cartCheckout-in.destination=cart-checkout-events
+spring.cloud.stream.bindings.cartCheckout-in.group=product-service-group
+spring.cloud.stream.bindings.cartCheckout-in.contentType=application/json
 
 # Outbound: Events die Product Service publiziert
-spring.cloud.stream.bindings.productReservationUpdated-out.destination=product-reservation-events
-spring.cloud.stream.bindings.productReservationUpdated-out.contentType=application/json
+spring.cloud.stream.bindings.productReservationConfirmed-out.destination=product-reservation-events
+spring.cloud.stream.bindings.productReservationConfirmed-out.contentType=application/json
 
 spring.cloud.stream.bindings.productReservationFailed-out.destination=product-reservation-events
 spring.cloud.stream.bindings.productReservationFailed-out.contentType=application/json
@@ -93,43 +88,43 @@ logging.level.org.springframework.amqp=DEBUG
 ### Schritt 3: Event-Klassen erstellen
 **Ordner:** `Product Service/src/main/java/at/fhv/productservice/events/`
 
-Erstellen Sie folgende 4 Event-Klassen:
+Erstellen Sie folgende 3 Event-Klassen (IDENTISCH mit Person A!):
 
-#### 3.1 OrderCreatedEvent.java
+#### 3.1 CartCheckoutEvent.java
 ```java
 package at.fhv.productservice.events;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class OrderCreatedEvent {
-    private UUID orderId;
+public class CartCheckoutEvent {
+    private UUID cartId;
     private UUID userId;
     private UUID productId;
     private int quantity;
-    private double price;
+    private double totalPrice;
     private LocalDateTime timestamp;
 
     // Konstruktor
-    public OrderCreatedEvent() {
+    public CartCheckoutEvent() {
     }
 
-    public OrderCreatedEvent(UUID orderId, UUID userId, UUID productId, int quantity, double price) {
-        this.orderId = orderId;
+    public CartCheckoutEvent(UUID cartId, UUID userId, UUID productId, int quantity, double totalPrice) {
+        this.cartId = cartId;
         this.userId = userId;
         this.productId = productId;
         this.quantity = quantity;
-        this.price = price;
+        this.totalPrice = totalPrice;
         this.timestamp = LocalDateTime.now();
     }
 
     // Getter und Setter
-    public UUID getOrderId() {
-        return orderId;
+    public UUID getCartId() {
+        return cartId;
     }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
+    public void setCartId(UUID cartId) {
+        this.cartId = cartId;
     }
 
     public UUID getUserId() {
@@ -156,91 +151,12 @@ public class OrderCreatedEvent {
         this.quantity = quantity;
     }
 
-    public double getPrice() {
-        return price;
+    public double getTotalPrice() {
+        return totalPrice;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-}
-```
-
-#### 3.2 OrderCanceledEvent.java
-```java
-package at.fhv.productservice.events;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-public class OrderCanceledEvent {
-    private UUID orderId;
-    private UUID userId;
-    private UUID productId;
-    private int quantity;
-    private String reason;
-    private LocalDateTime timestamp;
-
-    // Konstruktor
-    public OrderCanceledEvent() {
-    }
-
-    public OrderCanceledEvent(UUID orderId, UUID userId, UUID productId, int quantity, String reason) {
-        this.orderId = orderId;
-        this.userId = userId;
-        this.productId = productId;
-        this.quantity = quantity;
-        this.reason = reason;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    // Getter und Setter
-    public UUID getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
-
-    public UUID getProductId() {
-        return productId;
-    }
-
-    public void setProductId(UUID productId) {
-        this.productId = productId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = totalPrice;
     }
 
     public LocalDateTime getTimestamp() {
@@ -253,26 +169,26 @@ public class OrderCanceledEvent {
 }
 ```
 
-#### 3.3 ProductReservationUpdatedEvent.java
+#### 3.2 ProductReservationConfirmedEvent.java
 ```java
 package at.fhv.productservice.events;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class ProductReservationUpdatedEvent {
-    private UUID orderId;
+public class ProductReservationConfirmedEvent {
+    private UUID cartId;
     private UUID productId;
     private int reservedQuantity;
-    private String status; // "RESERVED"
+    private String status; // "CONFIRMED"
     private LocalDateTime timestamp;
 
     // Konstruktor
-    public ProductReservationUpdatedEvent() {
+    public ProductReservationConfirmedEvent() {
     }
 
-    public ProductReservationUpdatedEvent(UUID orderId, UUID productId, int reservedQuantity, String status) {
-        this.orderId = orderId;
+    public ProductReservationConfirmedEvent(UUID cartId, UUID productId, int reservedQuantity, String status) {
+        this.cartId = cartId;
         this.productId = productId;
         this.reservedQuantity = reservedQuantity;
         this.status = status;
@@ -280,12 +196,12 @@ public class ProductReservationUpdatedEvent {
     }
 
     // Getter und Setter
-    public UUID getOrderId() {
-        return orderId;
+    public UUID getCartId() {
+        return cartId;
     }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
+    public void setCartId(UUID cartId) {
+        this.cartId = cartId;
     }
 
     public UUID getProductId() {
@@ -322,7 +238,7 @@ public class ProductReservationUpdatedEvent {
 }
 ```
 
-#### 3.4 ProductReservationFailedEvent.java
+#### 3.3 ProductReservationFailedEvent.java
 ```java
 package at.fhv.productservice.events;
 
@@ -330,7 +246,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class ProductReservationFailedEvent {
-    private UUID orderId;
+    private UUID cartId;
     private UUID productId;
     private int requestedQuantity;
     private String reason; // z.B. "INSUFFICIENT_STOCK"
@@ -340,8 +256,8 @@ public class ProductReservationFailedEvent {
     public ProductReservationFailedEvent() {
     }
 
-    public ProductReservationFailedEvent(UUID orderId, UUID productId, int requestedQuantity, String reason) {
-        this.orderId = orderId;
+    public ProductReservationFailedEvent(UUID cartId, UUID productId, int requestedQuantity, String reason) {
+        this.cartId = cartId;
         this.productId = productId;
         this.requestedQuantity = requestedQuantity;
         this.reason = reason;
@@ -349,12 +265,12 @@ public class ProductReservationFailedEvent {
     }
 
     // Getter und Setter
-    public UUID getOrderId() {
-        return orderId;
+    public UUID getCartId() {
+        return cartId;
     }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
+    public void setCartId(UUID cartId) {
+        this.cartId = cartId;
     }
 
     public UUID getProductId() {
@@ -428,15 +344,6 @@ public class Product {
     }
 
     /**
-     * Reduziert die reservierte Menge
-     * 
-     * @param quantity Die freizugebende Menge
-     */
-    public void releaseReservation(int quantity) {
-        this.reservedQuantity = Math.max(0, this.reservedQuantity - quantity);
-    }
-
-    /**
      * Gibt die verfügbare Menge zurück (Menge - Reservierungen)
      * 
      * @return die verfügbare Menge
@@ -482,24 +389,20 @@ public class ProductMessagingConfig {
 
     // ===== Inbound Channels (Events die wir empfangen) =====
     
-    public static final String ORDER_CREATED_CHANNEL = "orderCreated-in";
-    public static final String ORDER_CANCELED_CHANNEL = "orderCanceled-in";
+    public static final String CART_CHECKOUT_CHANNEL = "cartCheckout-in";
     
     // ===== Outbound Channels (Events die wir publizieren) =====
     
-    public static final String PRODUCT_RESERVATION_UPDATED_CHANNEL = "productReservationUpdated-out";
+    public static final String PRODUCT_RESERVATION_CONFIRMED_CHANNEL = "productReservationConfirmed-out";
     public static final String PRODUCT_RESERVATION_FAILED_CHANNEL = "productReservationFailed-out";
 
     /**
-     * Interface für Order Event Listening
+     * Interface für Cart Event Listening
      */
-    public interface OrderEventListeningChannel {
+    public interface CartEventListeningChannel {
         
-        @Input(ORDER_CREATED_CHANNEL)
-        SubscribableChannel orderCreatedChannel();
-        
-        @Input(ORDER_CANCELED_CHANNEL)
-        SubscribableChannel orderCanceledChannel();
+        @Input(CART_CHECKOUT_CHANNEL)
+        SubscribableChannel cartCheckoutChannel();
     }
 
     /**
@@ -507,8 +410,8 @@ public class ProductMessagingConfig {
      */
     public interface ProductReservationPublishingChannel {
         
-        @Output(PRODUCT_RESERVATION_UPDATED_CHANNEL)
-        MessageChannel productReservationUpdatedChannel();
+        @Output(PRODUCT_RESERVATION_CONFIRMED_CHANNEL)
+        MessageChannel productReservationConfirmedChannel();
         
         @Output(PRODUCT_RESERVATION_FAILED_CHANNEL)
         MessageChannel productReservationFailedChannel();
@@ -525,8 +428,8 @@ public class ProductMessagingConfig {
 package at.fhv.productservice.messaging;
 
 import at.fhv.productservice.config.ProductMessagingConfig;
+import at.fhv.productservice.events.ProductReservationConfirmedEvent;
 import at.fhv.productservice.events.ProductReservationFailedEvent;
-import at.fhv.productservice.events.ProductReservationUpdatedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -549,33 +452,33 @@ public class ProductReservationEventPublisher {
     private ProductMessagingConfig.ProductReservationPublishingChannel channel;
 
     /**
-     * Publiziert ein ProductReservationUpdatedEvent
+     * Publiziert ein ProductReservationConfirmedEvent
      * Wird aufgerufen, wenn die Reservierung erfolgreich war
      * 
      * @param event Das zu publizierende Event
      */
-    public void publishProductReservationUpdated(ProductReservationUpdatedEvent event) {
+    public void publishProductReservationConfirmed(ProductReservationConfirmedEvent event) {
         try {
-            log.info("Publishing ProductReservationUpdatedEvent für Order ID: {}", event.getOrderId());
+            log.info("Publishing ProductReservationConfirmedEvent für Cart ID: {}", event.getCartId());
             
-            Message<ProductReservationUpdatedEvent> message = MessageBuilder
+            Message<ProductReservationConfirmedEvent> message = MessageBuilder
                     .withPayload(event)
                     .setHeader(org.springframework.messaging.MessageHeaders.CONTENT_TYPE, 
                                MimeTypeUtils.APPLICATION_JSON)
                     .build();
             
-            boolean sent = channel.productReservationUpdatedChannel().send(message);
+            boolean sent = channel.productReservationConfirmedChannel().send(message);
             if (sent) {
-                log.info("ProductReservationUpdatedEvent erfolgreich publiziert für Order ID: {}", 
-                        event.getOrderId());
+                log.info("ProductReservationConfirmedEvent erfolgreich publiziert für Cart ID: {}", 
+                        event.getCartId());
             } else {
-                log.error("Fehler beim Publizieren von ProductReservationUpdatedEvent für Order ID: {}", 
-                        event.getOrderId());
+                log.error("Fehler beim Publizieren von ProductReservationConfirmedEvent für Cart ID: {}", 
+                        event.getCartId());
             }
         } catch (Exception e) {
-            log.error("Fehler beim Publizieren von ProductReservationUpdatedEvent: {}", 
+            log.error("Fehler beim Publizieren von ProductReservationConfirmedEvent: {}", 
                     e.getMessage(), e);
-            throw new RuntimeException("Fehler beim Publizieren von ProductReservationUpdatedEvent", e);
+            throw new RuntimeException("Fehler beim Publizieren von ProductReservationConfirmedEvent", e);
         }
     }
 
@@ -587,7 +490,7 @@ public class ProductReservationEventPublisher {
      */
     public void publishProductReservationFailed(ProductReservationFailedEvent event) {
         try {
-            log.info("Publishing ProductReservationFailedEvent für Order ID: {}", event.getOrderId());
+            log.info("Publishing ProductReservationFailedEvent für Cart ID: {}", event.getCartId());
             
             Message<ProductReservationFailedEvent> message = MessageBuilder
                     .withPayload(event)
@@ -597,11 +500,11 @@ public class ProductReservationEventPublisher {
             
             boolean sent = channel.productReservationFailedChannel().send(message);
             if (sent) {
-                log.info("ProductReservationFailedEvent erfolgreich publiziert für Order ID: {}", 
-                        event.getOrderId());
+                log.info("ProductReservationFailedEvent erfolgreich publiziert für Cart ID: {}", 
+                        event.getCartId());
             } else {
-                log.error("Fehler beim Publizieren von ProductReservationFailedEvent für Order ID: {}", 
-                        event.getOrderId());
+                log.error("Fehler beim Publizieren von ProductReservationFailedEvent für Cart ID: {}", 
+                        event.getCartId());
             }
         } catch (Exception e) {
             log.error("Fehler beim Publizieren von ProductReservationFailedEvent: {}", 
@@ -614,17 +517,16 @@ public class ProductReservationEventPublisher {
 
 ---
 
-### Schritt 7: Order Event Listener erstellen
-**Datei:** `Product Service/src/main/java/at/fhv/productservice/messaging/OrderEventListener.java`
+### Schritt 7: Cart Event Listener erstellen
+**Datei:** `Product Service/src/main/java/at/fhv/productservice/messaging/CartEventListener.java`
 
 ```java
 package at.fhv.productservice.messaging;
 
 import at.fhv.productservice.config.ProductMessagingConfig;
-import at.fhv.productservice.events.OrderCanceledEvent;
-import at.fhv.productservice.events.OrderCreatedEvent;
+import at.fhv.productservice.events.CartCheckoutEvent;
+import at.fhv.productservice.events.ProductReservationConfirmedEvent;
 import at.fhv.productservice.events.ProductReservationFailedEvent;
-import at.fhv.productservice.events.ProductReservationUpdatedEvent;
 import at.fhv.productservice.model.Product;
 import at.fhv.productservice.repository.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -634,13 +536,13 @@ import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Listener für Order Events
- * Verarbeitet Bestellungen und aktualisiert Produktreservierungen
+ * Listener für Cart Checkout Events
+ * Verarbeitet Checkouts und aktualisiert Produktreservierungen
  */
 @Slf4j
 @Component
-@EnableBinding(ProductMessagingConfig.OrderEventListeningChannel.class)
-public class OrderEventListener {
+@EnableBinding(ProductMessagingConfig.CartEventListeningChannel.class)
+public class CartEventListener {
 
     @Autowired
     private ProductRepository productRepository;
@@ -649,16 +551,16 @@ public class OrderEventListener {
     private ProductReservationEventPublisher reservationPublisher;
 
     /**
-     * Verarbeitet OrderCreatedEvent
+     * Verarbeitet CartCheckoutEvent
      * Reserviert Produktmenge und publiziert Success/Failed Event
      * 
      * @param event Das empfangene Event
      */
-    @StreamListener(ProductMessagingConfig.ORDER_CREATED_CHANNEL)
-    public void handleOrderCreated(OrderCreatedEvent event) {
+    @StreamListener(ProductMessagingConfig.CART_CHECKOUT_CHANNEL)
+    public void handleCartCheckout(CartCheckoutEvent event) {
         try {
-            log.info("Received OrderCreatedEvent für Order ID: {}, Product ID: {}, Quantity: {}", 
-                    event.getOrderId(), event.getProductId(), event.getQuantity());
+            log.info("Received CartCheckoutEvent für Cart ID: {}, Product ID: {}, Quantity: {}", 
+                    event.getCartId(), event.getProductId(), event.getQuantity());
             
             Product product = productRepository.findById(event.getProductId())
                     .orElseThrow(() -> new RuntimeException(
@@ -677,13 +579,13 @@ public class OrderEventListener {
                         product.getReservedQuantity());
                 
                 // Publiziere Success Event
-                ProductReservationUpdatedEvent successEvent = new ProductReservationUpdatedEvent(
-                    event.getOrderId(),
+                ProductReservationConfirmedEvent successEvent = new ProductReservationConfirmedEvent(
+                    event.getCartId(),
                     event.getProductId(),
                     product.getReservedQuantity(),
-                    "RESERVED"
+                    "CONFIRMED"
                 );
-                reservationPublisher.publishProductReservationUpdated(successEvent);
+                reservationPublisher.publishProductReservationConfirmed(successEvent);
             } else {
                 // Nicht genug Menge verfügbar
                 log.warn("Nicht genug Produktmenge verfügbar. Angefordert: {}, Verfügbar: {}", 
@@ -691,7 +593,7 @@ public class OrderEventListener {
                 
                 // Publiziere Failed Event
                 ProductReservationFailedEvent failedEvent = new ProductReservationFailedEvent(
-                    event.getOrderId(),
+                    event.getCartId(),
                     event.getProductId(),
                     event.getQuantity(),
                     "INSUFFICIENT_STOCK"
@@ -699,12 +601,12 @@ public class OrderEventListener {
                 reservationPublisher.publishProductReservationFailed(failedEvent);
             }
         } catch (Exception e) {
-            log.error("Fehler beim Verarbeiten von OrderCreatedEvent: {}", e.getMessage(), e);
+            log.error("Fehler beim Verarbeiten von CartCheckoutEvent: {}", e.getMessage(), e);
             
             // Publiziere Failed Event als Fallback
             try {
                 ProductReservationFailedEvent failedEvent = new ProductReservationFailedEvent(
-                    event.getOrderId(),
+                    event.getCartId(),
                     event.getProductId(),
                     event.getQuantity(),
                     "PROCESSING_ERROR: " + e.getMessage()
@@ -713,36 +615,6 @@ public class OrderEventListener {
             } catch (Exception publishError) {
                 log.error("Fehler beim Publizieren von Fehler-Event: {}", publishError.getMessage());
             }
-        }
-    }
-
-    /**
-     * Verarbeitet OrderCanceledEvent
-     * Gibt reservierte Produktmenge frei
-     * 
-     * @param event Das empfangene Event
-     */
-    @StreamListener(ProductMessagingConfig.ORDER_CANCELED_CHANNEL)
-    public void handleOrderCanceled(OrderCanceledEvent event) {
-        try {
-            log.info("Received OrderCanceledEvent für Order ID: {}, Product ID: {}, Quantity: {}", 
-                    event.getOrderId(), event.getProductId(), event.getQuantity());
-            
-            Product product = productRepository.findById(event.getProductId())
-                    .orElseThrow(() -> new RuntimeException(
-                            "Produkt nicht gefunden: " + event.getProductId()));
-            
-            log.info("Gebe reservierte Menge frei. Aktuelle Reservierung: {}", 
-                    product.getReservedQuantity());
-            
-            // Gebe die Reservierung frei
-            product.releaseReservation(event.getQuantity());
-            productRepository.save(product);
-            
-            log.info("Reservierung erfolgreich freigegeben. Neue Reservierung: {}", 
-                    product.getReservedQuantity());
-        } catch (Exception e) {
-            log.error("Fehler beim Verarbeiten von OrderCanceledEvent: {}", e.getMessage(), e);
         }
     }
 }
@@ -808,13 +680,13 @@ public class ProductController {
 ---
 
 ### Schritt 9: Unit Tests schreiben
-**Datei:** `Product Service/src/test/java/at/fhv/productservice/messaging/OrderEventListenerTest.java`
+**Datei:** `Product Service/src/test/java/at/fhv/productservice/messaging/CartEventListenerTest.java`
 
 ```java
 package at.fhv.productservice.messaging;
 
 import at.fhv.productservice.config.ProductMessagingConfig;
-import at.fhv.productservice.events.OrderCreatedEvent;
+import at.fhv.productservice.events.CartCheckoutEvent;
 import at.fhv.productservice.model.Product;
 import at.fhv.productservice.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -834,10 +706,10 @@ import static org.mockito.Mockito.*;
 @TestPropertySource(properties = {
     "spring.cloud.stream.default.binder=test"
 })
-class OrderEventListenerTest {
+class CartEventListenerTest {
 
     @Autowired
-    private OrderEventListener orderEventListener;
+    private CartEventListener cartEventListener;
 
     @MockBean
     private ProductRepository productRepository;
@@ -858,35 +730,35 @@ class OrderEventListenerTest {
     }
 
     @Test
-    void testHandleOrderCreated_Success() {
-        UUID orderId = UUID.randomUUID();
-        OrderCreatedEvent event = new OrderCreatedEvent(
-            orderId, UUID.randomUUID(), productId, 10, 99.99
+    void testHandleCartCheckout_Success() {
+        UUID cartId = UUID.randomUUID();
+        CartCheckoutEvent event = new CartCheckoutEvent(
+            cartId, UUID.randomUUID(), productId, 10, 99.99
         );
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(testProduct));
         when(productRepository.save(any(Product.class))).thenReturn(testProduct);
 
-        orderEventListener.handleOrderCreated(event);
+        cartEventListener.handleCartCheckout(event);
 
         // Überprüfe, dass die Menge reserviert wurde
         verify(productRepository, times(1)).save(testProduct);
         verify(reservationPublisher, times(1))
-            .publishProductReservationUpdated(any());
+            .publishProductReservationConfirmed(any());
     }
 
     @Test
-    void testHandleOrderCreated_InsufficientStock() {
+    void testHandleCartCheckout_InsufficientStock() {
         testProduct.setQuantity(5);
         
-        UUID orderId = UUID.randomUUID();
-        OrderCreatedEvent event = new OrderCreatedEvent(
-            orderId, UUID.randomUUID(), productId, 10, 99.99
+        UUID cartId = UUID.randomUUID();
+        CartCheckoutEvent event = new CartCheckoutEvent(
+            cartId, UUID.randomUUID(), productId, 10, 99.99
         );
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(testProduct));
 
-        orderEventListener.handleOrderCreated(event);
+        cartEventListener.handleCartCheckout(event);
 
         // Überprüfe, dass Failed Event publiziert wird
         verify(reservationPublisher, times(1))
@@ -901,11 +773,11 @@ class OrderEventListenerTest {
 
 - [ ] Step 1: Dependencies zu build.gradle hinzufügen
 - [ ] Step 2: application.properties konfiguriert
-- [ ] Step 3: Alle 4 Event-Klassen erstellt
+- [ ] Step 3: Alle 3 Event-Klassen erstellt (IDENTISCH mit A!)
 - [ ] Step 4: Product Entity um reserved_quantity erweitert
 - [ ] Step 5: ProductMessagingConfig erstellt
 - [ ] Step 6: ProductReservationEventPublisher erstellt
-- [ ] Step 7: OrderEventListener erstellt und getestet
+- [ ] Step 7: CartEventListener erstellt und getestet
 - [ ] Step 8: OpenAPI-Annotationen hinzugefügt
 - [ ] Step 9: Unit Tests geschrieben und ausgeführt
 - [ ] Mit Person A: Integration testen nach deren Completion
@@ -915,29 +787,20 @@ class OrderEventListenerTest {
 ## 🔄 Saga Flow - Was passiert:
 
 ```
-1. Person A (OrderService): Bestellung erstellen
+1. Person A (CartService): Cart Checkout
    ↓
-2. RabbitMQ: OrderCreatedEvent in "order-events" Queue
+2. RabbitMQ: CartCheckoutEvent in "cart-checkout-events" Queue
    ↓
-3. Sie (ProductService): OrderEventListener empfängt Event
+3. Sie (ProductService): CartEventListener empfängt Event
    - Überprüfe Produktmenge
-   - Wenn genug: reservieren → ProductReservationUpdatedEvent ("RESERVED")
+   - Wenn genug: reservieren → ProductReservationConfirmedEvent ("CONFIRMED")
    - Wenn nicht: ProductReservationFailedEvent ("INSUFFICIENT_STOCK")
    ↓
 4. RabbitMQ: Response-Event in "product-reservation-events" Queue
    ↓
-5. Person A (OrderService): Empfängt Response
-   - RESERVED: Order Status → CONFIRMED
-   - FAILED: Order Status → CANCELED
-
-==========================================
-
-6. Bestellung wird storniert (Person A)
-   ↓
-7. RabbitMQ: OrderCanceledEvent in "order-events" Queue
-   ↓
-8. Sie (ProductService): OrderEventListener empfängt Event
-   - Gebe Reservierung frei
+5. Person A (CartService): Empfängt Response
+   - CONFIRMED: Cart Status → CHECKED_OUT
+   - FAILED: Cart Status → CHECKOUT_FAILED
 ```
 
 ---
@@ -946,7 +809,7 @@ class OrderEventListenerTest {
 
 - **Lokales RabbitMQ:** Stellen Sie sicher, dass RabbitMQ lokal läuft (Port 5672)
 - **Datenbankmigration:** Achten Sie auf die neue Spalte `reserved_quantity`
-- **Idempotenz:** Events können doppelt ankommen - nutzen Sie orderId zur Deduplizierung falls nötig
+- **Idempotenz:** Events können doppelt ankommen - nutzen Sie cartId zur Deduplizierung falls nötig
 - **Error Handling:** Fangen Sie Exceptions ab und publizieren Sie Fehler-Events
 - **Logging:** Nutzen Sie die Logs zum Debuggen
 - **Zusammenarbeit mit Person A:** Testen Sie zusammen die End-to-End Flow
@@ -957,25 +820,19 @@ class OrderEventListenerTest {
 
 ### Szenario 1: Erfolgreiche Reservierung
 1. Produkt mit 100 Stück erstellen
-2. Bestellung mit 10 Stück von Person A erstellen
+2. Cart mit 10 Stück von Person A checken out
 3. Überprüfen: Product.reservedQuantity = 10
-4. Überprüfen: Order.status = CONFIRMED
+4. Überprüfen: Cart.status = CHECKED_OUT
 
 ### Szenario 2: Unzureichender Bestand
 1. Produkt mit 5 Stück erstellen
-2. Bestellung mit 10 Stück von Person A erstellen
+2. Cart mit 10 Stück von Person A checken out
 3. Überprüfen: Product.reservedQuantity = 0
-4. Überprüfen: Order.status = CANCELED
-
-### Szenario 3: Stornierung
-1. Erfolgreiche Reservierung durchführen
-2. Product.reservedQuantity = 10
-3. Bestellung stornieren
-4. Überprüfen: Product.reservedQuantity = 0
+4. Überprüfen: Cart.status = CHECKOUT_FAILED
 
 ---
 
 **Status:** Bereit zur Implementierung  
 **Geschätzter Aufwand:** 8-10 Stunden  
-**Abhängig von:** Person A (Order Service)
+**Abhängig von:** Person A (Cart Service)
 
