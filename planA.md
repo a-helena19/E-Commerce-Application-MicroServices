@@ -73,58 +73,56 @@ spring.cloud.stream.rabbit.bindings.orderCanceledEventProducer-out-0.producer.ro
 ```java
 package at.fhv.orderservice.infrastructure.messaging.event;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 
-public class OrderCanceledEvent implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+public class OrderCanceledEvent {
+
     private UUID orderId;
     private UUID userId;
     private List<OrderItemEvent> orderItems;
     private long timestamp;
-    
+
     // Konstruktoren
     public OrderCanceledEvent() {
     }
-    
+
     public OrderCanceledEvent(UUID orderId, UUID userId, List<OrderItemEvent> orderItems) {
         this.orderId = orderId;
         this.userId = userId;
         this.orderItems = orderItems;
         this.timestamp = System.currentTimeMillis();
     }
-    
+
     // Getter und Setter
     public UUID getOrderId() {
         return orderId;
     }
-    
+
     public void setOrderId(UUID orderId) {
         this.orderId = orderId;
     }
-    
+
     public UUID getUserId() {
         return userId;
     }
-    
+
     public void setUserId(UUID userId) {
         this.userId = userId;
     }
-    
+
     public List<OrderItemEvent> getOrderItems() {
         return orderItems;
     }
-    
+
     public void setOrderItems(List<OrderItemEvent> orderItems) {
         this.orderItems = orderItems;
     }
-    
+
     public long getTimestamp() {
         return timestamp;
     }
-    
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
@@ -139,12 +137,10 @@ public class OrderCanceledEvent implements Serializable {
 ```java
 package at.fhv.orderservice.infrastructure.messaging.event;
 
-import java.io.Serializable;
 import java.util.UUID;
 
-public class OrderItemEvent implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+public class OrderItemEvent {
+
     private UUID productId;
     private int quantity;
     
@@ -522,5 +518,3 @@ Die Kommunikation erfolgt über RabbitMQ und Spring Cloud Stream - komplett asyn
 - **Fehlerbehandlung**: Im Producer sollte man auch Error-Handler überlegen
 - **Tracing**: Optional: Spring Cloud Sleuth für Distributed Tracing hinzufügen
 - **Deadletter-Queue**: Optional später für Fehlerbehandlung implementieren
-
-
