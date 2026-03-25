@@ -1,64 +1,56 @@
 package at.fhv.productservice.domain.model.event;
 
-import java.time.LocalDateTime;
+import at.fhv.productservice.domain.model.event.OrderItemEvent;
+
+import java.util.List;
+import java.util.UUID;
 
 public class OrderCanceledEvent {
 
-    private String orderId;
-    private String productId;
-    private Integer quantity;
-    private LocalDateTime timestamp;
+    private UUID orderId;
+    private UUID userId;
+    private List<OrderItemEvent> orderItems;
+    private long timestamp;
 
     public OrderCanceledEvent() {
-        this.timestamp = LocalDateTime.now();
     }
 
-    public OrderCanceledEvent(String orderId, String productId, Integer quantity) {
+    public OrderCanceledEvent(UUID orderId, UUID userId, List<OrderItemEvent> orderItems) {
         this.orderId = orderId;
-        this.productId = productId;
-        this.quantity = quantity;
-        this.timestamp = LocalDateTime.now();
+        this.userId = userId;
+        this.orderItems = orderItems;
+        this.timestamp = System.currentTimeMillis();
     }
 
-    public String getOrderId() {
+    public UUID getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(String orderId) {
+    public void setOrderId(UUID orderId) {
         this.orderId = orderId;
     }
 
-    public String getProductId() {
-        return productId;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+    public List<OrderItemEvent> getOrderItems() {
+        return orderItems;
     }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
+    public void setOrderItems(List<OrderItemEvent> orderItems) {
+        this.orderItems = orderItems;
     }
 
-    public LocalDateTime getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "OrderCanceledEvent{" +
-                "orderId='" + orderId + '\'' +
-                ", productId='" + productId + '\'' +
-                ", quantity=" + quantity +
-                ", timestamp=" + timestamp +
-                '}';
     }
 }

@@ -6,11 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class ProductService {
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    public void releaseReservation(String productId, Integer quantity) {
+    public void restoreStock(UUID productId, Integer quantity) {
         logger.info("Starting reservation release: productId={}, quantity={}", productId, quantity);
         validateInput(productId, quantity);
 
@@ -20,13 +22,13 @@ public class ProductService {
 
         } catch (Exception e) {
             logger.error("Error while updating reservation", e);
-            throw new ProductReservationException("Failed to release reservation", productId, quantity, e
+            throw new ProductReservationException("Failed to release reservation", productId.toString(), quantity, e
             );
         }
     }
 
-    private void validateInput(String productId, Integer quantity) {
-        if (productId == null || productId.isBlank()) {
+    private void validateInput(UUID productId, Integer quantity) {
+        if (productId == null) {
             logger.debug("Validation failed: productId is null or empty");
             throw new InvalidProductDataException("productId", productId, "must not be null or empty");
         }
