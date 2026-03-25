@@ -11,7 +11,7 @@ spring:
   cloud:
     stream:
       bindings:
-        orderCanceledIn-in-0:
+        orderCanceledEventConsumer-in-0:
           destination: order-events
           group: product-service
 
