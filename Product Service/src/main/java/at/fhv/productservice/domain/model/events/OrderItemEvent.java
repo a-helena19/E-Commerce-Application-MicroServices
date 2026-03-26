@@ -1,8 +1,7 @@
-package at.fhv.productservice.domain.model.event;
+package at.fhv.productservice.domain.model.events;
 import java.util.UUID;
 
 public class OrderItemEvent {
-
     private UUID productId;
     private int quantity;
 

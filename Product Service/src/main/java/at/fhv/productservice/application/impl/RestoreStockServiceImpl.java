@@ -1,5 +1,6 @@
-package at.fhv.productservice.domain.service;
+package at.fhv.productservice.application.impl;
 
+import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
 import at.fhv.productservice.domain.model.exception.InvalidProductDataException;
@@ -12,14 +13,15 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class ProductService {
-    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
+public class RestoreStockServiceImpl implements RestoreStockService {
+    private static final Logger logger = LoggerFactory.getLogger(RestoreStockServiceImpl.class);
     private final ProductRepository productRepository;
 
-    public ProductService(ProductRepository productRepository) {
+    public RestoreStockServiceImpl(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
+    @Override
     public void restoreStock(UUID productId, Integer quantity) {
         logger.info("Starting reservation release: productId={}, quantity={}", productId, quantity);
         validateInput(productId, quantity);

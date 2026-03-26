@@ -10,6 +10,8 @@ spring:
 
   cloud:
     stream:
+      function:
+        definition: orderCanceledEventConsumer
       bindings:
         orderCanceledEventConsumer-in-0:
           destination: order-events

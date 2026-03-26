@@ -1,12 +1,9 @@
-package at.fhv.productservice.domain.model.event;
-
-import at.fhv.productservice.domain.model.event.OrderItemEvent;
+package at.fhv.productservice.domain.model.events;
 
 import java.util.List;
 import java.util.UUID;
 
 public class OrderCanceledEvent {
-
     private UUID orderId;
     private UUID userId;
     private List<OrderItemEvent> orderItems;

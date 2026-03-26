@@ -1,6 +1,5 @@
 package at.fhv.productservice.rest;
 
-
 import at.fhv.productservice.application.services.CreateProductService;
 import at.fhv.productservice.application.services.DeleteProductService;
 import at.fhv.productservice.application.services.GetProductService;

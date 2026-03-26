@@ -1,8 +1,8 @@
 package at.fhv.productservice.messaging;
 
-import at.fhv.productservice.domain.model.event.OrderCanceledEvent;
-import at.fhv.productservice.domain.model.event.OrderItemEvent;
-import at.fhv.productservice.domain.service.ProductService;
+import at.fhv.productservice.domain.model.events.OrderCanceledEvent;
+import at.fhv.productservice.domain.model.events.OrderItemEvent;
+import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.exception.InvalidEventException;
 import at.fhv.productservice.domain.model.exception.OrderEventProcessingException;
 import org.slf4j.Logger;
@@ -14,24 +14,22 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OrderEventConsumerImpl {
     private static final Logger logger = LoggerFactory.getLogger(OrderEventConsumerImpl.class);
-    private final ProductService productService;
+    private final RestoreStockService restoreStockService;
 
-    public OrderEventConsumerImpl(ProductService productService) {
-        this.productService = productService;
+    public OrderEventConsumerImpl(RestoreStockService restoreStockService) {
+        this.restoreStockService = restoreStockService;
     }
 
     @Bean
     public Consumer<OrderCanceledEvent> orderCanceledEventConsumer() {
         return event -> {
             try {
-                logger.info("Received OrderCanceledEvent: orderId={}, itemCount={}",
-                        event.getOrderId(), event.getOrderItems().size());
+                logger.info("Received OrderCanceledEvent: orderId={}, itemCount={}", event.getOrderId(), event.getOrderItems().size());
                 validateEvent(event);
 
                 for (OrderItemEvent item : event.getOrderItems()) {
-                    logger.info("Restoring stock: productId={}, quantity={}",
-                            item.getProductId(), item.getQuantity());
-                    productService.restoreStock(item.getProductId(), item.getQuantity());
+                    logger.info("Restoring stock: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+                    restoreStockService.restoreStock(item.getProductId(), item.getQuantity());
                 }
 
                 logger.info("OrderCanceledEvent processed successfully: orderId={}", event.getOrderId());
@@ -46,11 +44,8 @@ public class OrderEventConsumerImpl {
 
             } catch (Exception e) {
                 logger.error("Unexpected error while processing event", e);
-                throw new OrderEventProcessingException(
-                        "Unexpected error while processing order cancellation",
-                        event != null ? event.getOrderId().toString() : "UNKNOWN",
-                        "Stock restoration failed",
-                        e
+                throw new OrderEventProcessingException("Unexpected error while processing order cancellation",
+                        event != null ? event.getOrderId().toString() : "UNKNOWN", "Stock restoration failed", e
                 );
             }
         };
