@@ -1,7 +1,7 @@
-package at.fhv.productservice.messaging;
+package at.fhv.productservice.infrastructure.messaging;
 
-import at.fhv.productservice.domain.model.events.OrderCanceledEvent;
-import at.fhv.productservice.domain.model.events.OrderItemEvent;
+import at.fhv.productservice.domain.model.event.OrderCanceledEvent;
+import at.fhv.productservice.domain.model.event.OrderItemEvent;
 import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.exception.InvalidEventException;
 import at.fhv.productservice.domain.model.exception.OrderEventProcessingException;
@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class OrderEventConsumerImpl {
-    private static final Logger logger = LoggerFactory.getLogger(OrderEventConsumerImpl.class);
+public class OrderEventConsumerConfig {
+    private static final Logger logger = LoggerFactory.getLogger(OrderEventConsumerConfig.class);
     private final RestoreStockService restoreStockService;
 
-    public OrderEventConsumerImpl(RestoreStockService restoreStockService) {
+    public OrderEventConsumerConfig(RestoreStockService restoreStockService) {
         this.restoreStockService = restoreStockService;
     }
 
@@ -24,8 +24,9 @@ public class OrderEventConsumerImpl {
     public Consumer<OrderCanceledEvent> orderCanceledEventConsumer() {
         return event -> {
             try {
-                logger.info("Received OrderCanceledEvent: orderId={}, itemCount={}", event.getOrderId(), event.getOrderItems().size());
                 validateEvent(event);
+                logger.info("Received OrderCanceledEvent: orderId={}, itemCount={}", event.getOrderId(), event.getOrderItems().size());
+
 
                 for (OrderItemEvent item : event.getOrderItems()) {
                     logger.info("Restoring stock: productId={}, quantity={}", item.getProductId(), item.getQuantity());

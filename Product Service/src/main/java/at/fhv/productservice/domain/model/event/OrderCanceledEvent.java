@@ -1,4 +1,4 @@
-package at.fhv.productservice.domain.model.events;
+package at.fhv.productservice.domain.model.event;
 
 import java.util.List;
 import java.util.UUID;
