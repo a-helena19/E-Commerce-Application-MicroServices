@@ -1,8 +1,8 @@
 package at.fhv.productservice.infrastructure.messaging;
 
+import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.event.OrderCanceledEvent;
 import at.fhv.productservice.domain.model.event.OrderItemEvent;
-import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.exception.InvalidEventException;
 import at.fhv.productservice.domain.model.exception.OrderEventProcessingException;
 import org.slf4j.Logger;

@@ -9,6 +9,7 @@ import at.fhv.productservice.domain.model.exception.ProductReservationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -22,7 +23,8 @@ public class RestoreStockServiceImpl implements RestoreStockService {
     }
 
     @Override
-    public void restoreStock(UUID productId, Integer quantity) {
+    @Transactional
+    public void restoreStock(UUID productId, int quantity) {
         logger.info("Starting reservation release: productId={}, quantity={}", productId, quantity);
         validateInput(productId, quantity);
 
@@ -49,13 +51,13 @@ public class RestoreStockServiceImpl implements RestoreStockService {
         }
     }
 
-    private void validateInput(UUID productId, Integer quantity) {
+    private void validateInput(UUID productId, int quantity) {
         if (productId == null) {
             logger.debug("Validation failed: productId is null or empty");
             throw new InvalidProductDataException("productId", productId, "must not be null or empty");
         }
 
-        if (quantity == null || quantity <= 0) {
+        if (quantity <= 0) {
             logger.debug("Validation failed: invalid quantity={}", quantity);
             throw new InvalidProductDataException("quantity", quantity, "must be greater than zero");
         }
