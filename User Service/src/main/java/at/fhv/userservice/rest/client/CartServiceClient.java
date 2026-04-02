@@ -8,17 +8,15 @@ import java.util.UUID;
 
 @Component
 public class CartServiceClient {
+    private static final String CART_SERVICE_NAME = "http://cart-service";
     private final RestTemplate restTemplate;
-    private final String cartServiceUrl;
 
-    public CartServiceClient(RestTemplate restTemplate,
-                            @Value("${cart.service.url}") String cartServiceUrl) {
+    public CartServiceClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.cartServiceUrl = cartServiceUrl;
     }
 
     public UUID createCartForUser(UUID userId) {
-        String url = cartServiceUrl + "/carts";
+        String url = CART_SERVICE_NAME + "/carts";
         CreateCartRequestDTO request = new CreateCartRequestDTO(userId);
 
         try {
@@ -33,7 +31,7 @@ public class CartServiceClient {
     }
 
     public UUID getCartByUserId(UUID userId) {
-        String url = cartServiceUrl + "/carts/user/" + userId;
+        String url = CART_SERVICE_NAME + "/carts/user/" + userId;
 
         try {
             var response = restTemplate.getForEntity(url, CreateCartResponseDTO.class);
@@ -47,7 +45,6 @@ public class CartServiceClient {
     }
 
     public void deleteCartByUserId(UUID userId) {
-        // First get the cart ID for this user
         UUID cartId = getCartByUserId(userId);
         if (cartId != null) {
             deleteCartById(cartId);
@@ -55,7 +52,7 @@ public class CartServiceClient {
     }
 
     public void deleteCartById(UUID cartId) {
-        String url = cartServiceUrl + "/carts/" + cartId;
+        String url = CART_SERVICE_NAME + "/carts/" + cartId;
 
         try {
             restTemplate.delete(url);

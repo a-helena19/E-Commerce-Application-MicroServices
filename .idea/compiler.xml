@@ -27,6 +27,9 @@
       <module name="User-Service" options="-parameters" />
       <module name="User-Service.main" options="-parameters" />
       <module name="User-Service.test" options="-parameters" />
+      <module name="eureka-server" options="-parameters" />
+      <module name="eureka-server.main" options="-parameters" />
+      <module name="eureka-server.test" options="-parameters" />
     </option>
   </component>
 </project>

@@ -8,17 +8,15 @@ import java.util.UUID;
 
 @Component
 public class CartServiceClient {
+    private static final String CART_SERVICE_NAME = "http://cart-service";
     private final RestTemplate restTemplate;
-    private final String cartServiceUrl;
 
-    public CartServiceClient(RestTemplate restTemplate,
-                           @Value("${cart.service.url}") String cartServiceUrl) {
+    public CartServiceClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.cartServiceUrl = cartServiceUrl;
     }
 
     public GetCartResponseDTO getCartByUserId(UUID userId) {
-        String url = cartServiceUrl + "/carts/user/" + userId;
+        String url = CART_SERVICE_NAME + "/carts/user/" + userId;
 
         try {
             var response = restTemplate.getForEntity(url, GetCartResponseDTO.class);
@@ -39,7 +37,7 @@ public class CartServiceClient {
     }
 
     public void clearCartById(UUID cartId) {
-        String url = cartServiceUrl + "/carts/" + cartId + "/items";
+        String url = CART_SERVICE_NAME + "/carts/" + cartId + "/items";
 
         try {
             restTemplate.delete(url);

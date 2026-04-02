@@ -4,11 +4,12 @@
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$/Api Gateway" />
     <file type="web" url="file://$PROJECT_DIR$/Cart Service" />
+    <file type="web" url="file://$PROJECT_DIR$/eureka-server" />
     <file type="web" url="file://$PROJECT_DIR$/Order Service" />
     <file type="web" url="file://$PROJECT_DIR$/Product Service" />
     <file type="web" url="file://$PROJECT_DIR$/User Service" />
   </component>
-  <component name="ProjectRootManager" version="2">
+  <component name="ProjectRootManager">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>

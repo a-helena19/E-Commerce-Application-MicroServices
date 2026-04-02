@@ -8,17 +8,15 @@ import java.util.UUID;
 
 @Component
 public class ProductServiceClient {
+    private static final String PRODUCT_SERVICE_NAME = "http://product-service";
     private final RestTemplate restTemplate;
-    private final String productServiceUrl;
 
-    public ProductServiceClient(RestTemplate restTemplate,
-                               @Value("${product.service.url}") String productServiceUrl) {
+    public ProductServiceClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.productServiceUrl = productServiceUrl;
     }
 
     public GetProductResponseDTO getProductById(UUID productId) {
-        String url = productServiceUrl + "/products/" + productId;
+        String url = PRODUCT_SERVICE_NAME + "/products/" + productId;
 
         try {
             var response = restTemplate.getForEntity(url, GetProductResponseDTO.class);
@@ -32,7 +30,7 @@ public class ProductServiceClient {
     }
 
     public GetProductResponseDTO reduceStock(UUID productId, int quantity) {
-        String url = productServiceUrl + "/products/" + productId + "/reduce-stock";
+        String url = PRODUCT_SERVICE_NAME + "/products/" + productId + "/reduce-stock";
         StockUpdateRequestDTO request = new StockUpdateRequestDTO(quantity);
 
         try {
@@ -47,7 +45,7 @@ public class ProductServiceClient {
     }
 
     public GetProductResponseDTO restoreStock(UUID productId, int quantity) {
-        String url = productServiceUrl + "/products/" + productId + "/restore-stock";
+        String url = PRODUCT_SERVICE_NAME + "/products/" + productId + "/restore-stock";
         StockUpdateRequestDTO request = new StockUpdateRequestDTO(quantity);
 
         try {

@@ -8,17 +8,16 @@ import java.util.UUID;
 
 @Component
 public class ProductServiceClient {
-    private final RestTemplate restTemplate;
-    private final String productServiceUrl;
+    private static final String PRODUCT_SERVICE_NAME = "http://product-service";
 
-    public ProductServiceClient(RestTemplate restTemplate,
-                               @Value("${product.service.url}") String productServiceUrl) {
+    private final RestTemplate restTemplate;
+
+    public ProductServiceClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.productServiceUrl = productServiceUrl;
     }
 
     public GetProductResponseDTO getProductById(UUID productId) {
-        String url = productServiceUrl + "/products/" + productId;
+        String url = PRODUCT_SERVICE_NAME + "/products/" + productId;
 
         try {
             var response = restTemplate.getForEntity(url, GetProductResponseDTO.class);
