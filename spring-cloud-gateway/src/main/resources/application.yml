@@ -34,7 +34,7 @@ spring:
           metadata:
             description: Product Service - Product catalog operations
 
-        # Cart Service Route - FIXED: Changed /api/cart to /api/carts
+        # Cart Service Route
         - id: cart-service-route
           uri: lb://cart-service
           predicates:
