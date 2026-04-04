@@ -6,6 +6,7 @@ type OrderDetails {
     orderId: ID
     status: String
     totalPrice: Float
+    createdAt: String
     customer: Customer
     items: [OrderItem]
 }
@@ -14,11 +15,14 @@ type Customer {
     id: ID
     name: String
     email: String
+    address: String
 }
 
 type OrderItem {
     productId: ID
     productName: String
+    description: String
     quantity: Int
-    price: Float
+    unitPrice: Float
+    totalPrice: Float
 }
