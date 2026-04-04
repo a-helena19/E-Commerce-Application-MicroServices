@@ -7,7 +7,8 @@ public class RemoteProductDTO {
     private Double price;
     private Integer stock;
 
-    public RemoteProductDTO() {}
+    public RemoteProductDTO() {
+    }
 
     public RemoteProductDTO(String id, String name, String description, Double price, Integer stock) {
         this.id = id;

@@ -8,7 +8,8 @@ public class OrderItemDTO {
     private Double unitPrice;
     private Double totalPrice;
 
-    public OrderItemDTO() {}
+    public OrderItemDTO() {
+    }
 
     public OrderItemDTO(String productId, String productName, String description, Integer quantity, Double unitPrice, Double totalPrice) {
         this.productId = productId;

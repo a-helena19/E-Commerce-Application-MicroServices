@@ -10,7 +10,8 @@ public class RemoteOrderDTO {
     private String userId;
     private List<RemoteOrderItemDTO> items;
 
-    public RemoteOrderDTO() {}
+    public RemoteOrderDTO() {
+    }
 
     public RemoteOrderDTO(String id, String status, Double totalPrice, String createdAt, String userId, List<RemoteOrderItemDTO> items) {
         this.id = id;
@@ -69,13 +70,14 @@ public class RemoteOrderDTO {
         this.items = items;
     }
 
-
     public static class RemoteOrderItemDTO {
         private String productId;
         private Integer quantity;
         private Double unitPrice;
 
-        public RemoteOrderItemDTO() {}
+        public RemoteOrderItemDTO() {
+        }
+
         public RemoteOrderItemDTO(String productId, Integer quantity, Double unitPrice) {
             this.productId = productId;
             this.quantity = quantity;

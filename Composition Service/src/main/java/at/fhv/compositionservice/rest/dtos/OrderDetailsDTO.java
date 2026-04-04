@@ -10,7 +10,8 @@ public class OrderDetailsDTO {
     private CustomerDTO customer;
     private List<OrderItemDTO> items;
 
-    public OrderDetailsDTO() {}
+    public OrderDetailsDTO() {
+    }
 
     public OrderDetailsDTO(String orderId, String status, Double totalPrice, String createdAt, CustomerDTO customer, List<OrderItemDTO> items) {
         this.orderId = orderId;
@@ -52,7 +53,6 @@ public class OrderDetailsDTO {
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
-
 
     public CustomerDTO getCustomer() {
         return customer;

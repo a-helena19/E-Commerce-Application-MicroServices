@@ -6,7 +6,8 @@ public class CustomerDTO {
     private String email;
     private String address;
 
-    public CustomerDTO() {}
+    public CustomerDTO() {
+    }
 
     public CustomerDTO(String id, String name, String email, String address) {
         this.id = id;
@@ -46,5 +47,4 @@ public class CustomerDTO {
     public void setAddress(String address) {
         this.address = address;
     }
-
 }

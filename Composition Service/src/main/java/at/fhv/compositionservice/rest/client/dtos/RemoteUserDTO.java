@@ -7,7 +7,8 @@ public class RemoteUserDTO {
     private String email;
     private String address;
 
-    public RemoteUserDTO() {}
+    public RemoteUserDTO() {
+    }
 
     public RemoteUserDTO(String id, String firstName, String lastName, String email, String address) {
         this.id = id;
