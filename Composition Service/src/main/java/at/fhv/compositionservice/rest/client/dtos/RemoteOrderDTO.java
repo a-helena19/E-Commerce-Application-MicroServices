@@ -1,11 +1,12 @@
 package at.fhv.compositionservice.rest.client.dtos;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class RemoteOrderDTO {
     private String id;
     private String status;
-    private Double totalPrice;
+    private BigDecimal totalPrice;
     private String createdAt;
     private String userId;
     private List<RemoteOrderItemDTO> items;
@@ -13,7 +14,7 @@ public class RemoteOrderDTO {
     public RemoteOrderDTO() {
     }
 
-    public RemoteOrderDTO(String id, String status, Double totalPrice, String createdAt, String userId, List<RemoteOrderItemDTO> items) {
+    public RemoteOrderDTO(String id, String status, BigDecimal totalPrice, String createdAt, String userId, List<RemoteOrderItemDTO> items) {
         this.id = id;
         this.status = status;
         this.totalPrice = totalPrice;
@@ -38,11 +39,11 @@ public class RemoteOrderDTO {
         this.status = status;
     }
 
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(Double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
     }
 
@@ -73,15 +74,15 @@ public class RemoteOrderDTO {
     public static class RemoteOrderItemDTO {
         private String productId;
         private Integer quantity;
-        private Double unitPrice;
+        private BigDecimal price;
 
         public RemoteOrderItemDTO() {
         }
 
-        public RemoteOrderItemDTO(String productId, Integer quantity, Double unitPrice) {
+        public RemoteOrderItemDTO(String productId, Integer quantity, BigDecimal price) {
             this.productId = productId;
             this.quantity = quantity;
-            this.unitPrice = unitPrice;
+            this.price = price;
         }
 
         public String getProductId() {
@@ -100,12 +101,12 @@ public class RemoteOrderDTO {
             this.quantity = quantity;
         }
 
-        public Double getUnitPrice() {
-            return unitPrice;
+        public BigDecimal getPrice() {
+            return price;
         }
 
-        public void setUnitPrice(Double unitPrice) {
-            this.unitPrice = unitPrice;
+        public void setPrice(BigDecimal price) {
+            this.price = price;
         }
     }
 }

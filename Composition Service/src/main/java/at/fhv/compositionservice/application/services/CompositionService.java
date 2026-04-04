@@ -56,9 +56,8 @@ public class CompositionService {
                                                     remoteItem.getProductId());
                                             return productServiceClient.getProduct(remoteItem.getProductId())
                                                     .map(product -> {
-                                                        Double unitPrice = remoteItem.getUnitPrice() != null ?
-                                                            remoteItem.getUnitPrice() : 0.0;
-                                                        double totalPrice = remoteItem.getQuantity() * unitPrice;
+                                                        Double unitPrice = remoteItem.getPrice() != null ?
+                                                            remoteItem.getPrice().doubleValue() : 0.0;
 
                                                         return new OrderItemDTO(
                                                                 product.getId(),
@@ -66,7 +65,7 @@ public class CompositionService {
                                                                 product.getDescription(),
                                                                 remoteItem.getQuantity(),
                                                                 unitPrice,
-                                                                totalPrice
+                                                                remoteOrder.getTotalPrice().doubleValue()
                                                         );
                                                     });
                                         })
@@ -77,7 +76,7 @@ public class CompositionService {
                                             OrderDetailsDTO orderDetails = new OrderDetailsDTO(
                                                     remoteOrder.getId(),
                                                     remoteOrder.getStatus(),
-                                                    remoteOrder.getTotalPrice(),
+                                                    remoteOrder.getTotalPrice().doubleValue(),
                                                     remoteOrder.getCreatedAt(),
                                                     customer,
                                                     items
