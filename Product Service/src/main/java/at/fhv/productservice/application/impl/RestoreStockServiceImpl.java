@@ -1,5 +1,6 @@
 package at.fhv.productservice.application.impl;
 
+import at.fhv.productservice.application.metrics.ProductMetricsService;
 import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
@@ -17,9 +18,11 @@ import java.util.UUID;
 public class RestoreStockServiceImpl implements RestoreStockService {
     private static final Logger logger = LoggerFactory.getLogger(RestoreStockServiceImpl.class);
     private final ProductRepository productRepository;
+    private final ProductMetricsService productMetricsService;
 
-    public RestoreStockServiceImpl(ProductRepository productRepository) {
+    public RestoreStockServiceImpl(ProductRepository productRepository, ProductMetricsService productMetricsService) {
         this.productRepository = productRepository;
+        this.productMetricsService = productMetricsService;
     }
 
     @Override
@@ -41,6 +44,8 @@ public class RestoreStockServiceImpl implements RestoreStockService {
             logger.debug("Stock increased: productId={}, quantity={}, newStock={}", productId, quantity, product.getStock());
             productRepository.save(product);
             logger.info("Product availability updated: productId={}, newStock={}", productId, product.getStock());
+            int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+            productMetricsService.updateStockLevel(totalStock);
 
         } catch (ProductReservationException e) {
             logger.error("Error while updating reservation: {}", e.getMessage(), e);

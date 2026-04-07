@@ -2,6 +2,7 @@ package at.fhv.productservice.application.impl;
 
 
 import at.fhv.productservice.application.mapper.ProductDTOMapper;
+import at.fhv.productservice.application.metrics.ProductMetricsService;
 import at.fhv.productservice.application.services.CreateProductService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
@@ -13,16 +14,20 @@ import org.springframework.stereotype.Service;
 public class CreateProductServiceImpl implements CreateProductService {
     private final ProductRepository productRepository;
     private final ProductDTOMapper productDTOMapper;
+    private final ProductMetricsService productMetricsService;
 
-    public CreateProductServiceImpl(ProductRepository productRepository, ProductDTOMapper productDTOMapper) {
+    public CreateProductServiceImpl(ProductRepository productRepository, ProductDTOMapper productDTOMapper, ProductMetricsService productMetricsService) {
         this.productRepository = productRepository;
         this.productDTOMapper = productDTOMapper;
+        this.productMetricsService = productMetricsService;
     }
 
     @Override
     public GetProductDTO createProduct(CreateProductDTO dto) {
         Product product = productDTOMapper.toDomainCreateProductDTO(dto);
         Product savedProduct = productRepository.save(product);
+        int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+        productMetricsService.updateStockLevel(totalStock);
         return productDTOMapper.toGetProductDTO(savedProduct);
     }
 }

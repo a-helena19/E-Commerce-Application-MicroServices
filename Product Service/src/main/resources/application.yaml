@@ -17,5 +17,14 @@ spring:
           destination: order-events
           group: product-service
 
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health, info, prometheus, metrics
+    metrics:
+      tags:
+        application: ${spring.application.name}
+
 server:
   port: 8092
