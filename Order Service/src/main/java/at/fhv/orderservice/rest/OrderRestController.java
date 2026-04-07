@@ -78,4 +78,10 @@ public class OrderRestController {
 
     }
 
+    @GetMapping("/slow")
+    public ResponseEntity<List<GetOrderDTO>> getAllOrdersSlow() throws InterruptedException {
+        Thread.sleep(3000);
+        return ResponseEntity.ok(getOrderService.getAllOrders());
+    }
+
 }

@@ -1,5 +1,6 @@
 package at.fhv.orderservice.application.services.impl;
 
+import at.fhv.orderservice.application.metrics.OrderMetricsService;
 import at.fhv.orderservice.application.services.DeleteOrderService;
 import at.fhv.orderservice.domain.events.OrderCanceledEvent;
 import at.fhv.orderservice.domain.events.OrderItemEvent;
@@ -21,10 +22,12 @@ public class DeleteOrderServiceImpl implements DeleteOrderService {
     private static final Logger logger = LoggerFactory.getLogger(DeleteOrderServiceImpl.class);
     private final OrderRepository orderRepository;
     private final OrderEventProducer orderEventProducer;
+    private final OrderMetricsService  orderMetricsService;
 
-    public DeleteOrderServiceImpl(OrderRepository orderRepository, OrderEventProducer orderEventProducer) {
+    public DeleteOrderServiceImpl(OrderRepository orderRepository, OrderEventProducer orderEventProducer, OrderMetricsService orderMetricsService) {
         this.orderRepository = orderRepository;
         this.orderEventProducer = orderEventProducer;
+        this.orderMetricsService = orderMetricsService;
     }
 
     @Override
@@ -44,6 +47,9 @@ public class DeleteOrderServiceImpl implements DeleteOrderService {
 
             order.delete();
             orderRepository.save(order);
+
+            orderMetricsService.incrementOrdersCancelled();
+
             logger.debug("Order status updated to DELETED: orderId={}", orderId);
 
             OrderCanceledEvent event = new OrderCanceledEvent(
@@ -60,6 +66,7 @@ public class DeleteOrderServiceImpl implements DeleteOrderService {
             orderEventProducer.publishOrderCanceledEvent(event);
 
             logger.info("Order successfully canceled and event published: orderId={}", orderId);
+
 
         } catch (OrderNotFoundException e) {
             logger.error("Order not found: orderId={}", orderId);

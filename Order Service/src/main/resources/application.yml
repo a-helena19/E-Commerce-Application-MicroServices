@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: order-service
+
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+
+  datasource:
+    url: jdbc:h2:mem:orderdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+  cloud:
+    stream:
+      bindings:
+        orderCanceledEventProducer-out-0:
+          destination: order-events
+          content-type: application/json
+      rabbit:
+        bindings:
+          orderCanceledEventProducer-out-0:
+            producer:
+              routing-key-expression: "headers['routingKey']"
+
+server:
+  port: 8094
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springdoc: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  metrics:
+    tags:
+      application: ${spring.application.name}

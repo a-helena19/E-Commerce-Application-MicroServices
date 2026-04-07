@@ -1,6 +1,7 @@
 package at.fhv.orderservice.application.services.impl;
 
 import at.fhv.orderservice.application.mapper.dtoMapper.OrderDTOMapper;
+import at.fhv.orderservice.application.metrics.OrderMetricsService;
 import at.fhv.orderservice.application.services.CreateOrderService;
 import at.fhv.orderservice.domain.model.Order;
 import at.fhv.orderservice.domain.model.OrderItem;
@@ -24,13 +25,16 @@ public class CreateOrderServiceImpl implements CreateOrderService {
     private final CartServiceClient cartServiceClient;
     private final ProductServiceClient productServiceClient;
     private final OrderDTOMapper orderDTOMapper;
+    private final OrderMetricsService orderMetricsService;
 
     public CreateOrderServiceImpl(OrderRepository orderRepository, CartServiceClient cartServiceClient,
-                                ProductServiceClient productServiceClient, OrderDTOMapper orderDTOMapper) {
+                                ProductServiceClient productServiceClient, OrderDTOMapper orderDTOMapper,
+                                OrderMetricsService orderMetricsService) {
         this.orderRepository = orderRepository;
         this.cartServiceClient = cartServiceClient;
         this.productServiceClient = productServiceClient;
         this.orderDTOMapper = orderDTOMapper;
+        this.orderMetricsService = orderMetricsService;
     }
 
     @Override
@@ -95,6 +99,8 @@ public class CreateOrderServiceImpl implements CreateOrderService {
 
         // Clear cart after successful order creation (call Cart Service)
         cartServiceClient.clearCartByUserId(dto.getUserId());
+
+        orderMetricsService.incrementOrdersCreated();
 
         return orderDTOMapper.toGetOrderDTO(savedOrder);
     }
