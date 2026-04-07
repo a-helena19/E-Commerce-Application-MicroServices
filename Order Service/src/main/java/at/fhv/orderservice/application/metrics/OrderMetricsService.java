@@ -11,13 +11,16 @@ public class OrderMetricsService {
     private final Counter ordersCancelledCounter;
 
     public OrderMetricsService(MeterRegistry registry) {
-        this.ordersCreatedCounter = Counter.builder("orders_created_total")
+        this.ordersCreatedCounter = Counter.builder("orders_added")
                 .description("Total number of orders created")
                 .register(registry);
 
-        this.ordersCancelledCounter = Counter.builder("orders_cancelled_total")
+        this.ordersCancelledCounter = Counter.builder("orders_cancelled")
                 .description("Total number of orders cancelled")
                 .register(registry);
+
+        ordersCreatedCounter.increment(0);
+        ordersCancelledCounter.increment(0);
     }
 
     public void incrementOrdersCreated() {
