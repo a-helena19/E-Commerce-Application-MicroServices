@@ -4,6 +4,7 @@ import at.fhv.productservice.application.metrics.ProductMetricsService;
 import at.fhv.productservice.application.services.RestoreStockService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
+import at.fhv.productservice.domain.model.ProductStatus;
 import at.fhv.productservice.domain.model.exception.InvalidProductDataException;
 import at.fhv.productservice.domain.model.exception.ProductNotFoundException;
 import at.fhv.productservice.domain.model.exception.ProductReservationException;
@@ -44,7 +45,7 @@ public class RestoreStockServiceImpl implements RestoreStockService {
             logger.debug("Stock increased: productId={}, quantity={}, newStock={}", productId, quantity, product.getStock());
             productRepository.save(product);
             logger.info("Product availability updated: productId={}, newStock={}", productId, product.getStock());
-            int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+            int totalStock = productRepository.findAll().stream().filter(p -> p.getStatus() == ProductStatus.ACTIVE).mapToInt(Product::getStock).sum();
             productMetricsService.updateStockLevel(totalStock);
 
         } catch (ProductReservationException e) {

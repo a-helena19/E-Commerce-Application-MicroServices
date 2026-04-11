@@ -6,6 +6,7 @@ import at.fhv.productservice.application.metrics.ProductMetricsService;
 import at.fhv.productservice.application.services.UpdateProductService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
+import at.fhv.productservice.domain.model.ProductStatus;
 import at.fhv.productservice.domain.model.exception.ProductNotFoundException;
 import at.fhv.productservice.rest.dtos.GetProductDTO;
 import at.fhv.productservice.rest.dtos.UpdateProductDTO;
@@ -30,7 +31,7 @@ public class UpdateProductServiceImpl implements UpdateProductService {
         Product product = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         product.update(dto.getName(), dto.getDescription(), dto.getPrice(), dto.getStock());
         Product updatedProduct = productRepository.save(product);
-        int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+        int totalStock = productRepository.findAll().stream().filter(p -> p.getStatus() == ProductStatus.ACTIVE).mapToInt(Product::getStock).sum();
         productMetricsService.updateStockLevel(totalStock);
         return productDTOMapper.toGetProductDTO(updatedProduct);
     }
@@ -46,7 +47,7 @@ public class UpdateProductServiceImpl implements UpdateProductService {
 
         product.reduceStock(quantity);
         Product updatedProduct = productRepository.save(product);
-        int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+        int totalStock = productRepository.findAll().stream().filter(p -> p.getStatus() == ProductStatus.ACTIVE).mapToInt(Product::getStock).sum();
         productMetricsService.updateStockLevel(totalStock);
         return productDTOMapper.toGetProductDTO(updatedProduct);
     }
@@ -58,7 +59,7 @@ public class UpdateProductServiceImpl implements UpdateProductService {
 
         product.increaseStock(quantity);
         Product updatedProduct = productRepository.save(product);
-        int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+        int totalStock = productRepository.findAll().stream().filter(p -> p.getStatus() == ProductStatus.ACTIVE).mapToInt(Product::getStock).sum();
         productMetricsService.updateStockLevel(totalStock);
         return productDTOMapper.toGetProductDTO(updatedProduct);
     }

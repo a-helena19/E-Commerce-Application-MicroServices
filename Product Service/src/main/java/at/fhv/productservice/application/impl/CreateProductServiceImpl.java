@@ -6,6 +6,7 @@ import at.fhv.productservice.application.metrics.ProductMetricsService;
 import at.fhv.productservice.application.services.CreateProductService;
 import at.fhv.productservice.domain.model.Product;
 import at.fhv.productservice.domain.model.ProductRepository;
+import at.fhv.productservice.domain.model.ProductStatus;
 import at.fhv.productservice.rest.dtos.CreateProductDTO;
 import at.fhv.productservice.rest.dtos.GetProductDTO;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,8 @@ public class CreateProductServiceImpl implements CreateProductService {
     public GetProductDTO createProduct(CreateProductDTO dto) {
         Product product = productDTOMapper.toDomainCreateProductDTO(dto);
         Product savedProduct = productRepository.save(product);
-        int totalStock = productRepository.findAll().stream().mapToInt(Product::getStock).sum();
+        productMetricsService.incrementProductsAdded();
+        int totalStock = productRepository.findAll().stream().filter(p -> p.getStatus() == ProductStatus.ACTIVE).mapToInt(Product::getStock).sum();
         productMetricsService.updateStockLevel(totalStock);
         return productDTOMapper.toGetProductDTO(savedProduct);
     }

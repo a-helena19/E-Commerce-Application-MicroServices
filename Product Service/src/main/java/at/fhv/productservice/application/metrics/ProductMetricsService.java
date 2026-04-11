@@ -1,22 +1,20 @@
 package at.fhv.productservice.application.metrics;
 
-import at.fhv.productservice.domain.model.Product;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class ProductMetricsService {
-    private final Counter productsViewedCounter;
+    private final Counter productsAddedCounter;
     private final AtomicInteger currentStockLevel = new AtomicInteger(0);
 
     public ProductMetricsService(MeterRegistry registry) {
-        this.productsViewedCounter = Counter.builder("products_viewed_total")
-                .description("Total number of product detail views")
+        this.productsAddedCounter = Counter.builder("products_added_total")
+                .description("Total number of products created")
                 .register(registry);
 
         Gauge.builder("product_stock_level", currentStockLevel, AtomicInteger::get)
@@ -24,8 +22,8 @@ public class ProductMetricsService {
                 .register(registry);
     }
 
-    public void incrementProductsViewed() {
-        productsViewedCounter.increment();
+    public void incrementProductsAdded() {
+        productsAddedCounter.increment();
     }
 
     public void updateStockLevel(int total) {
