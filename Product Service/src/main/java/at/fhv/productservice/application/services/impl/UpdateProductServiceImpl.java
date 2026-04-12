@@ -1,4 +1,4 @@
-package at.fhv.productservice.application.impl;
+package at.fhv.productservice.application.services.impl;
 
 
 import at.fhv.productservice.application.mapper.ProductDTOMapper;

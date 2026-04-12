@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+    </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Api_Gateway" target="17" />
       <module name="Api_Gateway.main" target="17" />
       <module name="Api_Gateway.test" target="17" />
+      <module name="composition-service.main" target="17" />
+      <module name="composition-service.test" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
@@ -27,6 +32,9 @@
       <module name="User-Service" options="-parameters" />
       <module name="User-Service.main" options="-parameters" />
       <module name="User-Service.test" options="-parameters" />
+      <module name="composition-service" options="-parameters" />
+      <module name="composition-service_main" options="-parameters" />
+      <module name="composition-service_test" options="-parameters" />
       <module name="eureka-server" options="-parameters" />
       <module name="eureka-server.main" options="-parameters" />
       <module name="eureka-server.test" options="-parameters" />
